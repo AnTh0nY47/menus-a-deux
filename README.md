@@ -6,7 +6,15 @@ Petite appli web qui génère les menus d'un mois pour deux personnes. On mange 
 
 Les besoins de chacun sont calculés avec la formule de Mifflin St Jeor à partir du sexe, de l'âge, de la taille, du poids, du niveau d'activité et de l'objectif. Les jours sans salle, les glucides baissent un peu.
 
-Chaque jour propose un petit déjeuner, un midi, une collation et un dîner. Les portions sont données en grammes crus pour chaque personne.
+Chaque jour propose un petit déjeuner, un midi, une collation et un dîner. Les portions sont données en grammes crus pour chaque personne, et chaque plat a sa recette détaillée avec les temps de préparation et de cuisson. Les plats de 20 minutes ou moins sont marqués Rapide.
+
+Un plat qui ne plaît pas peut être changé d'un appui, ou retiré pour de bon avec Je n'aime pas. Les plats retirés se remettent depuis Profils.
+
+L'option Cuisiner le dîner en double prévoit les restes du dîner pour le midi du lendemain en semaine. Le soir, l'appli donne les quantités totales à cuisiner, boîtes comprises.
+
+Le calcul des portions se fait sur la journée entière : le midi et le dîner rattrapent les écarts du petit déjeuner et de la collation, pour rester à quelques pourcents de l'objectif.
+
+Le suivi du poids, dans Profils, trace la moyenne sur 7 jours et la tendance par semaine. Si la tendance sort de la cible de l'objectif pendant deux semaines, l'appli ajuste les calories toute seule, de 250 kcal au plus à chaque fois.
 
 L'onglet Courses donne la liste de la semaine pour les deux, rangée par rayon, avec une estimation du prix.
 

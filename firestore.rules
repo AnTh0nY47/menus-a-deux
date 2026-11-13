@@ -6,8 +6,8 @@ service cloud.firestore {
       allow list, delete: if false;
       allow create, update: if request.auth != null
         && code.size() >= 20
-        && request.resource.data.keys().hasOnly(['people','excl','seed','start','days','cheap','stock','done','ledger','v','checked','updatedAt'])
-        && request.resource.data.size() <= 12;
+        && request.resource.data.keys().hasOnly(['people','excl','seed','start','days','cheap','stock','done','ledger','v','checked','updatedAt','ov','banned','leftovers'])
+        && request.resource.data.size() <= 15;
     }
     match /{document=**} {
       allow read, write: if false;
