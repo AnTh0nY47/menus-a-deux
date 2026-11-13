@@ -98,6 +98,8 @@ input,select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid
 .shop h3{font-family:var(--display);font-size:16px;margin-bottom:6px}
 .shop ul{list-style:none;margin:0;padding:0}
 .shop li .q{text-align:right}
+.shop li label .note{display:block}
+ul.plain{margin:0;padding-left:18px}
 .shop li{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
 .shop li label{flex-direction:row;align-items:center;gap:8px;color:var(--ink);font-weight:500;font-size:15px}
 .shop li input{width:auto}
@@ -126,6 +128,7 @@ body{-webkit-tap-highlight-color:transparent}
   <nav class="tabs" aria-label="Sections">
     <button id="tab-menus" data-tab="menus">Menus</button>
     <button id="tab-courses" data-tab="courses">Courses</button>
+    <button id="tab-stock" data-tab="stock">Stock</button>
     <button id="tab-profils" data-tab="profils">Profils</button>
   </nav>
   <main id="app"></main>
@@ -409,14 +412,54 @@ function shoppingFor(w){
  return {tot,groups,order};
 }
 function shopQty(k,g){const f=F[k];if(f.pc){const u=Math.ceil(g/f.pc);return u+" "+(u>1?f.unit[1]:f.unit[0])}if(k==="lait")return (Math.ceil(g/100)/10).toFixed(1).replace(".",",")+" L";const r=Math.ceil(g/50)*50;return r>=1000?(r/1000).toFixed(r%1000?2:0).replace(".",",")+" kg":r+" g"}
+/* ---------- Stock ---------- */
+function stockOf(){if(!S.stock)S.stock={};if(!S.done)S.done={};if(!S.ledger)S.ledger={};return S.stock}
+function firstOpenWeek(){for(let w=0;w<nWeeks();w++)if(!S.done[w])return w;return nWeeks()}
+function projectedStock(w){
+ const st=Object.assign({},stockOf());
+ for(let i=firstOpenWeek();i<w;i++){if(S.done[i])continue;const t=shoppingFor(i).tot;for(const k in st)st[k]=Math.max(0,st[k]-(t[k]||0))}
+ return st;
+}
+function toBuy(w){
+ const {tot,groups,order}=shoppingFor(w);const st=projectedStock(w);const buy={},have={};
+ for(const k in tot){const hv=Math.min(st[k]||0,tot[k]);have[k]=hv;const b=tot[k]-hv;if(b>0.5)buy[k]=b}
+ return {tot,buy,have,groups,order};
+}
+function unitLbl(k){const f=F[k];return f.pc?f.unit[1]:k==="lait"?"ml":"g"}
+function toInput(k,g){const f=F[k];return f.pc?Math.ceil(g/f.pc-0.001):Math.ceil(g/50)*50}
+function fromInput(k,v){const f=F[k];v=parseFloat(String(v).replace(",","."));if(isNaN(v)||v<0)v=0;return f.pc?v*f.pc:v}
+function stockQty(k,g){const f=F[k];if(f.pc){const u=Math.round(g/f.pc*10)/10;return String(u).replace(".",",")+" "+(u>1?f.unit[1]:f.unit[0])}if(k==="lait")return (g/1000).toFixed(1).replace(".",",")+" L";return g>=1000?(g/1000).toFixed(2).replace(".",",")+" kg":Math.round(g)+" g"}
 function viewCourses(){
- const {tot,groups,order}=shoppingFor(S.week);
- const ck=S.checked["w"+S.week]||{};
- let total=0;for(const k in tot)total+=price(k,tot[k]);
- let all=0;for(let w=0;w<nWeeks();w++){const t=shoppingFor(w).tot;for(const k in t)all+=price(k,t[k])}
- const html=order.filter(o=>groups[o]).map(o=>`<div class="card shop"><h3>${o}</h3><ul>${groups[o].sort((a,b)=>F[a].n.localeCompare(F[b].n)).map(k=>`<li class="${ck[k]?"done":""}"><label><input type="checkbox" id="ck-${k}" data-ck="${k}" ${ck[k]?"checked":""}>${esc(F[k].n)}</label><span class="q">${shopQty(k,tot[k])} <span class="note">· ${euro(price(k,tot[k]))}</span></span></li>`).join("")}</ul></div>`).join("");
- return `<div class="stack"><div class="row between"><h2>Liste de courses</h2><button data-act="copy" id="copybtn">Copier la liste</button></div>${weekNav()}<div class="card tgt"><div class="row between"><h3>Budget estimé</h3><button data-act="cheap" class="${S.cheap?"on":""}" aria-pressed="${!!S.cheap}">${S.cheap?"Prix bas activés":"Prix bas (viande surgelée, gros paquets)"}</button></div><div class="kcal">≈ ${Math.round(total)} € <small>cette semaine</small></div><p class="note" style="margin:4px 0 0">Environ ${Math.round(all)} € sur les ${S.days} jours. Prix moyens en marque distributeur, pour ce que vous mangez vraiment : en caisse, compte un peu plus à cause des paquets entiers.</p></div>
- <p class="note">Pour vous deux, toute la semaine, arrondi au-dessus. Épices, sel, citron et vinaigrette non comptés.</p>${html}<textarea id="clip" aria-hidden="true" tabindex="-1"></textarea></div>`;
+ stockOf();const w=S.week;
+ const {tot,buy,have,groups,order}=toBuy(w);
+ const ck=S.checked["w"+w]||{};
+ let total=0;for(const k in buy)total+=price(k,buy[k]);
+ const open=firstOpenWeek();
+ if(S.done[w]){
+  const L=S.ledger[w]||{};const items=Object.keys(L.bought||{}).filter(k=>L.bought[k]>0);
+  return `<div class="stack"><h2>Liste de courses</h2>${weekNav()}<div class="card stack"><h3>Courses faites pour cette semaine</h3><p class="note" style="margin:0">Ce que tu as acheté a été ajouté au stock, et ce que vous mangez cette semaine en a été retiré.</p><ul class="plain">${items.map(k=>`<li>${esc(F[k].n)} : ${stockQty(k,L.bought[k])}</li>`).join("")||"<li>Rien acheté, tout venait du stock.</li>"}</ul>${w===lastDone()?`<div class="row"><button data-act="undo">Annuler la validation</button></div>`:""}</div></div>`;
+ }
+ if(S.editBuy===w){
+  const keys=Object.keys(tot).sort((a,b)=>F[a].n.localeCompare(F[b].n));
+  return `<div class="stack"><h2>Ce que tu as acheté</h2>${weekNav()}<p class="note">Corrige les quantités avec ce que tu as vraiment pris, paquets entiers compris. Le surplus part dans le stock pour les semaines suivantes.</p><div class="card shop"><ul>${keys.map(k=>`<li><label for="bq-${k}" style="flex:1">${esc(F[k].n)}<span class="note" style="font-weight:400">besoin ${shopQty(k,tot[k])}${have[k]>0.5?`, en stock ${stockQty(k,have[k])}`:""}</span></label><span class="row" style="gap:6px;flex-wrap:nowrap"><input id="bq-${k}" data-bq="${k}" type="number" inputmode="decimal" min="0" step="any" style="width:90px" value="${toInput(k,buy[k]||0)}"><span class="note" style="width:52px">${unitLbl(k)}</span></span></li>`).join("")}</ul></div><div class="row"><button class="primary" data-act="validate">Valider et mettre à jour le stock</button><button class="ghost" data-act="cancelbuy">Annuler</button></div></div>`;
+ }
+ const buyKeys=Object.keys(buy),stockKeys=Object.keys(tot).filter(k=>!buy[k]);
+ const html=order.map(o=>{const ks=(groups[o]||[]).filter(k=>buy[k]);if(!ks.length)return"";return `<div class="card shop"><h3>${o}</h3><ul>${ks.sort((a,b)=>F[a].n.localeCompare(F[b].n)).map(k=>`<li class="${ck[k]?"done":""}"><label><input type="checkbox" id="ck-${k}" data-ck="${k}" ${ck[k]?"checked":""}>${esc(F[k].n)}</label><span class="q">${shopQty(k,buy[k])} <span class="note">· ${euro(price(k,buy[k]))}</span>${have[k]>0.5?`<br><span class="note">${stockQty(k,have[k])} déjà en stock</span>`:""}</span></li>`).join("")}</ul></div>`}).join("");
+ const fromStock=stockKeys.length?`<div class="card shop"><h3>Déjà dans le stock</h3><ul>${stockKeys.map(k=>`<li><span>${esc(F[k].n)}</span><span class="q note">${shopQty(k,tot[k])}</span></li>`).join("")}</ul></div>`:"";
+ const canValidate=w===open;
+ return `<div class="stack"><div class="row between"><h2>Liste de courses</h2><button data-act="copy" id="copybtn">Copier la liste</button></div>${weekNav()}<div class="card tgt"><div class="row between"><h3>Budget estimé</h3><button data-act="cheap" class="${S.cheap?"on":""}" aria-pressed="${!!S.cheap}">${S.cheap?"Prix bas activés":"Prix bas (viande surgelée, gros paquets)"}</button></div><div class="kcal">≈ ${Math.round(total)} € <small>à acheter cette semaine</small></div><p class="note" style="margin:4px 0 0">Stock déduit. Prix moyens en marque distributeur, pour les quantités exactes : en caisse, compte un peu plus à cause des paquets entiers.</p></div>
+ ${canValidate?`<div class="row"><button class="primary" data-act="bought">J'ai fait les courses</button></div>`:`<p class="note">${w<open?"":"Valide d'abord les courses des semaines précédentes pour que le stock soit à jour."}</p>`}
+ <p class="note">Pour vous deux, toute la semaine. Épices, sel, citron et vinaigrette non comptés.</p>${html||`<p class="warn">Tout est déjà dans le stock cette semaine.</p>`}${fromStock}<textarea id="clip" aria-hidden="true" tabindex="-1"></textarea></div>`;
+}
+function lastDone(){let l=-1;for(let w=0;w<nWeeks();w++)if(S.done[w])l=w;return l}
+function viewStock(){
+ const st=stockOf();const keys=Object.keys(st).filter(k=>st[k]>0.5).sort((a,b)=>F[a].n.localeCompare(F[b].n));
+ const opts=Object.keys(F).sort((a,b)=>F[a].n.localeCompare(F[b].n)).map(k=>`<option value="${k}">${esc(F[k].n)}</option>`).join("");
+ return `<div class="stack"><h2>Stock à la maison</h2><p class="note">Ce qui reste après les courses validées, plus ce que tu ajoutes à la main (placards, congélateur). C'est déduit automatiquement des listes suivantes.</p>
+ <div class="card shop">${keys.length?`<ul>${keys.map(k=>`<li><label for="st-${k}" style="flex:1">${esc(F[k].n)}</label><span class="row" style="gap:6px;flex-wrap:nowrap"><input id="st-${k}" data-st="${k}" type="number" inputmode="decimal" min="0" step="any" style="width:90px" value="${F[k].pc?Math.round(st[k]/F[k].pc*10)/10:Math.round(st[k])}"><span class="note" style="width:52px">${unitLbl(k)}</span></span></li>`).join("")}</ul>`:`<p class="note" style="margin:0">Le stock est vide.</p>`}</div>
+ <div class="card stack"><h3>Ajouter au stock</h3><div class="form"><label class="full" for="addk">Aliment<select id="addk">${opts}</select></label><label for="addq">Quantité<input id="addq" type="number" inputmode="decimal" min="0" step="any" placeholder="ex. 500"></label><label>&nbsp;<button data-act="addstock">Ajouter</button></label></div><p class="note" style="margin:0">En grammes, en ml pour le lait, en nombre pour les œufs, bananes, pommes, tortillas et pains burger. Mets 0 pour retirer un aliment.</p></div>
+ <p class="note">Viande ou poisson frais en trop : congèle-les le jour des courses pour qu'ils tiennent jusqu'à la semaine suivante.</p>
+ ${keys.length?`<div class="row"><button class="ghost" data-act="clearstock">Vider le stock</button></div>`:""}</div>`;
 }
 function personForm(p,i){
  return `<div class="card stack"><h2>${esc(p.name)}</h2><div class="form">
@@ -445,7 +488,7 @@ function viewProfils(){
 function render(){
  if(S.week>=nWeeks())S.week=nWeeks()-1;
  document.querySelectorAll("nav.tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===S.tab));
- $("#app").innerHTML=S.tab==="menus"?viewMenus():S.tab==="courses"?viewCourses():viewProfils();
+ $("#app").innerHTML=S.tab==="menus"?viewMenus():S.tab==="courses"?viewCourses():S.tab==="stock"?viewStock():viewProfils();
 }
 function refresh(full){if(full)buildPlan();save();render()}
 
@@ -459,12 +502,25 @@ document.addEventListener("click",e=>{
  else if(a==="regen"){S.seed=Math.floor(Math.random()*1e9);S.checked={};refresh(true)}
  else if(a==="reset"){const keep=S.tab;S=JSON.parse(JSON.stringify(DEFAULT));S.tab=keep;refresh(true)}
  else if(a==="copy"){
-  const {tot,groups,order}=shoppingFor(S.week);
-  const txt="Courses semaine "+(S.week+1)+"\n\n"+order.filter(o=>groups[o]).map(o=>o+"\n"+groups[o].map(k=>"  "+F[k].n+" : "+shopQty(k,tot[k])).join("\n")).join("\n\n");
+  const {buy,groups,order}=toBuy(S.week);
+  const txt="Courses semaine "+(S.week+1)+"\n\n"+order.map(o=>{const ks=(groups[o]||[]).filter(k=>buy[k]);return ks.length?o+"\n"+ks.map(k=>"  "+F[k].n+" : "+shopQty(k,buy[k])).join("\n"):""}).filter(Boolean).join("\n\n");
   const done=()=>{b.textContent="Liste copiée";setTimeout(()=>{b.textContent="Copier la liste"},1800)};
   try{navigator.clipboard.writeText(txt).then(done,()=>{fallback(txt);done()})}catch(err){fallback(txt);done()}
  }
  else if(b.dataset.tr){const [i,d]=b.dataset.tr.split("-").map(Number);S.people[i].train[d]=!S.people[i].train[d];refresh()}
+ else if(a==="bought"){S.editBuy=S.week;render();window.scrollTo(0,0)}
+ else if(a==="cancelbuy"){S.editBuy=null;render()}
+ else if(a==="validate"){
+  const w=S.week,st=stockOf(),{tot}=shoppingFor(w),bought={};
+  document.querySelectorAll("[data-bq]").forEach(i=>{bought[i.dataset.bq]=fromInput(i.dataset.bq,i.value)});
+  S.ledger[w]={before:Object.assign({},st),bought};
+  const keys=new Set([...Object.keys(st),...Object.keys(tot),...Object.keys(bought)]);
+  keys.forEach(k=>{const v=Math.max(0,(st[k]||0)+(bought[k]||0)-(tot[k]||0));if(v>0.5)st[k]=v;else delete st[k]});
+  S.done[w]=true;S.editBuy=null;S.checked["w"+w]={};if(S.week<nWeeks()-1)S.week++;refresh();window.scrollTo(0,0)
+ }
+ else if(a==="undo"){const w=S.week;if(S.ledger[w]){S.stock=S.ledger[w].before;delete S.ledger[w]}delete S.done[w];refresh()}
+ else if(a==="addstock"){const k=$("#addk").value,q=fromInput(k,$("#addq").value);const st=stockOf();if(q>0)st[k]=(st[k]||0)+q;refresh()}
+ else if(a==="clearstock"){S.stock={};refresh()}
  else if(a==="cheap"){S.cheap=!S.cheap;refresh()}
  else if(b.dataset.sweet){const i=+b.dataset.sweet;S.people[i].sweet=!S.people[i].sweet;refresh()}
  else if(b.dataset.snack){const i=+b.dataset.snack;S.people[i].snack=!S.people[i].snack;refresh()}
@@ -473,6 +529,7 @@ document.addEventListener("click",e=>{
 function fallback(t){const ta=$("#clip");if(!ta)return;ta.value=t;ta.select();try{document.execCommand("copy")}catch(e){}}
 document.addEventListener("change",e=>{
  const t=e.target;
+ if(t.dataset.st){const k=t.dataset.st,v=fromInput(k,t.value),st=stockOf();if(v>0.5)st[k]=v;else delete st[k];refresh();return}
  if(t.dataset.ck){const w="w"+S.week;S.checked[w]=S.checked[w]||{};S.checked[w][t.dataset.ck]=t.checked;save();t.closest("li").classList.toggle("done",t.checked);return}
  if(t.dataset.p!==undefined){const p=S.people[+t.dataset.p],f=t.dataset.f;let v=t.value;
   if(["age","h","w","act"].includes(f)){v=parseFloat(v);if(isNaN(v))return}

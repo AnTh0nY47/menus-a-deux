@@ -10,6 +10,8 @@ Chaque jour propose un petit déjeuner, un midi, une collation et un dîner. Les
 
 L'onglet Courses donne la liste de la semaine pour les deux, rangée par rayon, avec une estimation du prix.
 
+L'onglet Stock garde ce qui reste à la maison. Après les courses, on appuie sur J'ai fait les courses et on corrige les quantités vraiment achetées. Le surplus, par exemple un gros paquet de riz ou une barquette de viande en plus, part dans le stock et n'apparaît plus dans les listes suivantes tant qu'il en reste. On peut aussi ajouter à la main ce qu'on a déjà dans les placards.
+
 Le calendrier d'alternance est pris en compte : les jours en entreprise, pas de repas du midi pour la personne concernée.
 
 ## Installer sur téléphone
