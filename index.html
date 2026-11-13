@@ -133,6 +133,9 @@ body{-webkit-tap-highlight-color:transparent}
   </nav>
   <main id="app"></main>
 </div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
 /* ---------- Aliments : valeurs pour 100 g crus ---------- */
 const F={
@@ -275,7 +278,68 @@ try{S=JSON.parse(localStorage.getItem("menus-couple-v1"))}catch(e){S=null}
 if(!S||!S.people){S=JSON.parse(JSON.stringify(DEFAULT))}
 if(!S.v){S.v=2;if(!S.excl.includes("fdm"))S.excl.push("fdm")}
 S.people.forEach((p,i)=>{if(!p.lunch)p.lunch=i===1?"alt":"home";if(p.sweet===undefined)p.sweet=i===1});
-function save(){try{localStorage.setItem("menus-couple-v1",JSON.stringify(S))}catch(e){}}
+function saveLocal(){try{const o=Object.assign({},S);delete o.editBuy;localStorage.setItem("menus-couple-v1",JSON.stringify(o))}catch(e){}}
+function save(){saveLocal();schedulePush()}
+
+/* ---------- Partage entre les deux téléphones (Firestore) ---------- */
+const FB_CONFIG={apiKey:"AIzaSyDoLroXKfWx13eUf1Mmj005AOBkR8adxRs",authDomain:"menu-a-deux.firebaseapp.com",projectId:"menu-a-deux",storageBucket:"menu-a-deux.firebasestorage.app",messagingSenderId:"527837966126",appId:"1:527837966126:web:6fcd0a0eb8e8794c7f54bf"};
+const SHARED=["people","excl","seed","start","days","cheap","stock","done","ledger","v"];
+let db=null,unsub=null,lastPushed="",pushT=null,SYNC={state:"off",msg:""};
+function fbReady(){
+ if(db)return true;if(!window.firebase)return false;
+ try{firebase.initializeApp(FB_CONFIG);db=firebase.firestore();db.enablePersistence({synchronizeTabs:true}).catch(()=>{});return true}catch(e){return false}
+}
+async function fbAuth(){const u=firebase.auth().currentUser;if(u)return u.uid;const c=await firebase.auth().signInAnonymously();return c.user.uid}
+function sharedState(){const o={};SHARED.forEach(k=>{if(S[k]!==undefined)o[k]=S[k]});return JSON.parse(JSON.stringify(o))}
+function foyer(code){return db.collection("foyers").doc(code||S.household)}
+function setSync(state,msg){SYNC={state,msg:msg||""};const el=document.getElementById("syncstate");if(el)el.textContent=syncLabel()}
+function syncLabel(){return {off:"",wait:"Connexion…",ok:"Synchronisé",err:"Erreur de synchro : "+SYNC.msg,missing:"Ce foyer n'existe plus"}[SYNC.state]||""}
+function fullDoc(){return Object.assign(sharedState(),{checked:JSON.parse(JSON.stringify(S.checked||{})),updatedAt:firebase.firestore.FieldValue.serverTimestamp()})}
+function schedulePush(){
+ if(!S.household||!db)return;
+ const js=JSON.stringify(sharedState());if(js===lastPushed)return;
+ clearTimeout(pushT);pushT=setTimeout(()=>{lastPushed=js;foyer().set(fullDoc()).then(()=>setSync("ok")).catch(e=>setSync("err",e.code||e.message))},600);
+}
+function pushChecked(w,k,v){if(!S.household||!db)return;foyer().update({["checked."+w+"."+k]:v}).catch(e=>setSync("err",e.code||e.message))}
+function applyRemote(d){
+ SHARED.forEach(k=>{if(d[k]!==undefined)S[k]=d[k]});S.checked=d.checked||{};
+ if(!S.done)S.done={};if(!S.stock)S.stock={};if(!S.ledger)S.ledger={};
+ S.people.forEach((p,i)=>{if(!p.lunch)p.lunch=i===1?"alt":"home";if(p.sweet===undefined)p.sweet=i===1});
+ lastPushed=JSON.stringify(sharedState());saveLocal();buildPlan();
+ const a=document.activeElement;if(!(a&&(a.tagName==="INPUT"||a.tagName==="SELECT")))render();
+}
+async function subscribe(){
+ if(!fbReady()||!S.household)return;
+ setSync("wait");
+ try{await fbAuth()}catch(e){setSync("err",e.code||e.message);return}
+ if(unsub)unsub();
+ unsub=foyer().onSnapshot({includeMetadataChanges:false},snap=>{
+  if(!snap.exists){setSync("missing");return}
+  if(snap.metadata.hasPendingWrites)return;
+  applyRemote(snap.data());setSync("ok");
+ },e=>setSync("err",e.code||e.message));
+}
+function genCode(){const A="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",r=new Uint32Array(24);crypto.getRandomValues(r);return Array.from(r,x=>A[x%A.length]).join("")}
+const fmtCode=c=>c.replace(/(.{4})/g,"$1 ").trim();
+async function createFoyer(){
+ if(!fbReady()){setSync("err","Firebase ne s'est pas chargé, vérifie le réseau");render();return}
+ try{setSync("wait");await fbAuth();const code=genCode();await foyer(code).set(fullDoc());S.household=code;lastPushed=JSON.stringify(sharedState());saveLocal();await subscribe();render()}
+ catch(e){setSync("err",e.code||e.message);render()}
+}
+async function joinFoyer(raw){
+ const code=String(raw||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
+ if(code.length<20){setSync("err","code trop court");render();return}
+ if(!fbReady()){setSync("err","Firebase ne s'est pas chargé, vérifie le réseau");render();return}
+ try{setSync("wait");await fbAuth();const s=await foyer(code).get();if(!s.exists){setSync("err","code introuvable");render();return}
+  S.household=code;applyRemote(s.data());await subscribe();render()}
+ catch(e){setSync("err",e.code||e.message);render()}
+}
+function leaveFoyer(){if(unsub)unsub();unsub=null;delete S.household;setSync("off");saveLocal();render()}
+function syncCard(){
+ if(!window.firebase)return `<div class="card stack"><h2>Partage à deux</h2><p class="note" style="margin:0">Le partage n'est pas disponible ici. Ouvre l'appli depuis son adresse GitHub Pages.</p></div>`;
+ if(S.household)return `<div class="card stack"><h2>Partage à deux</h2><p class="note" style="margin:0">Code du foyer, à saisir sur l'autre téléphone :</p><div class="kcal" style="font-family:var(--display);font-size:20px;letter-spacing:.04em;word-break:break-all">${fmtCode(S.household)}</div><p class="note" id="syncstate" style="margin:0">${syncLabel()}</p><div class="row"><button data-act="copycode" id="copycode">Copier le code</button><button class="ghost" data-act="leave">Quitter ce foyer</button></div><p class="note" style="margin:0">Garde ce code pour vous deux : quiconque l'a peut voir et modifier vos menus.</p></div>`;
+ return `<div class="card stack"><h2>Partage à deux</h2><p class="note" style="margin:0">Partage les menus, le stock et la liste de courses avec l'autre téléphone. Crée le foyer sur un téléphone, puis entre le code sur l'autre.</p><div class="row"><button class="primary" data-act="create">Créer un foyer</button></div><div class="form"><label class="full" for="joincode">Rejoindre avec un code<input id="joincode" autocomplete="off" autocapitalize="characters" placeholder="XXXX XXXX XXXX XXXX XXXX XXXX"></label></div><div class="row"><button data-act="join">Rejoindre</button></div>${SYNC.state==="err"?`<p class="warn" style="margin:0">${esc(syncLabel())}</p>`:SYNC.state==="wait"?`<p class="note" style="margin:0">Connexion…</p>`:""}</div>`;
+}
 
 /* ---------- Calculs ---------- */
 function targets(p){
@@ -477,7 +541,7 @@ function personForm(p,i){
  </div>`;
 }
 function viewProfils(){
- return `<div class="stack">${targetCards()}${S.people.map(personForm).join("")}
+ return `<div class="stack">${syncCard()}${targetCards()}${S.people.map(personForm).join("")}
  <div class="card stack"><h2>Le mois</h2><div class="form">
  <label for="start">Premier jour<input id="start" type="date" data-g="start" value="${S.start}"></label>
  <label for="days">Durée<select id="days" data-g="days">${[7,14,28,30,31].map(n=>`<option value="${n}"${S.days===n?" selected":""}>${n} jours</option>`).join("")}</select></label></div>
@@ -499,7 +563,7 @@ document.addEventListener("click",e=>{
  const a=b.dataset.act;
  if(a==="wprev"){S.week=Math.max(0,S.week-1);refresh()}
  else if(a==="wnext"){S.week=Math.min(nWeeks()-1,S.week+1);refresh()}
- else if(a==="regen"){S.seed=Math.floor(Math.random()*1e9);S.checked={};refresh(true)}
+ else if(a==="regen"){S.seed=Math.floor(Math.random()*1e9);S.checked={};lastPushed="";refresh(true)}
  else if(a==="reset"){const keep=S.tab;S=JSON.parse(JSON.stringify(DEFAULT));S.tab=keep;refresh(true)}
  else if(a==="copy"){
   const {buy,groups,order}=toBuy(S.week);
@@ -516,11 +580,15 @@ document.addEventListener("click",e=>{
   S.ledger[w]={before:Object.assign({},st),bought};
   const keys=new Set([...Object.keys(st),...Object.keys(tot),...Object.keys(bought)]);
   keys.forEach(k=>{const v=Math.max(0,(st[k]||0)+(bought[k]||0)-(tot[k]||0));if(v>0.5)st[k]=v;else delete st[k]});
-  S.done[w]=true;S.editBuy=null;S.checked["w"+w]={};if(S.week<nWeeks()-1)S.week++;refresh();window.scrollTo(0,0)
+  S.done[w]=true;S.editBuy=null;S.checked["w"+w]={};lastPushed="";if(S.week<nWeeks()-1)S.week++;refresh();window.scrollTo(0,0)
  }
  else if(a==="undo"){const w=S.week;if(S.ledger[w]){S.stock=S.ledger[w].before;delete S.ledger[w]}delete S.done[w];refresh()}
  else if(a==="addstock"){const k=$("#addk").value,q=fromInput(k,$("#addq").value);const st=stockOf();if(q>0)st[k]=(st[k]||0)+q;refresh()}
  else if(a==="clearstock"){S.stock={};refresh()}
+ else if(a==="create"){createFoyer()}
+ else if(a==="join"){joinFoyer($("#joincode").value)}
+ else if(a==="leave"){leaveFoyer()}
+ else if(a==="copycode"){const t=fmtCode(S.household);try{navigator.clipboard.writeText(t).then(()=>{b.textContent="Code copié"},()=>{fallback(t);b.textContent="Code copié"})}catch(err){fallback(t);b.textContent="Code copié"}}
  else if(a==="cheap"){S.cheap=!S.cheap;refresh()}
  else if(b.dataset.sweet){const i=+b.dataset.sweet;S.people[i].sweet=!S.people[i].sweet;refresh()}
  else if(b.dataset.snack){const i=+b.dataset.snack;S.people[i].snack=!S.people[i].snack;refresh()}
@@ -530,7 +598,7 @@ function fallback(t){const ta=$("#clip");if(!ta)return;ta.value=t;ta.select();tr
 document.addEventListener("change",e=>{
  const t=e.target;
  if(t.dataset.st){const k=t.dataset.st,v=fromInput(k,t.value),st=stockOf();if(v>0.5)st[k]=v;else delete st[k];refresh();return}
- if(t.dataset.ck){const w="w"+S.week;S.checked[w]=S.checked[w]||{};S.checked[w][t.dataset.ck]=t.checked;save();t.closest("li").classList.toggle("done",t.checked);return}
+ if(t.dataset.ck){const w="w"+S.week;S.checked[w]=S.checked[w]||{};S.checked[w][t.dataset.ck]=t.checked;saveLocal();pushChecked(w,t.dataset.ck,t.checked);t.closest("li").classList.toggle("done",t.checked);return}
  if(t.dataset.p!==undefined){const p=S.people[+t.dataset.p],f=t.dataset.f;let v=t.value;
   if(["age","h","w","act"].includes(f)){v=parseFloat(v);if(isNaN(v))return}
   if(f==="name"&&!v.trim())v="Personne "+(+t.dataset.p+1);
@@ -538,6 +606,7 @@ document.addEventListener("change",e=>{
  if(t.dataset.g){if(t.dataset.g==="start"){if(!t.value)return;S.start=t.value}else S.days=+t.value;S.week=0;refresh(true)}
 });
 buildPlan();render();
+if(S.household)subscribe();
 if("serviceWorker" in navigator&&location.protocol==="https:"){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{})})}
 </script>
 </body>

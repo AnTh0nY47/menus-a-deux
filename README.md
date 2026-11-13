@@ -22,12 +22,17 @@ Sur Android, ouvrir le lien dans Chrome puis Installer l'application dans le men
 
 L'appli s'ouvre alors en plein écran comme une vraie application et fonctionne aussi sans réseau.
 
-## Données
+## Partage à deux
 
-Les profils et réglages restent enregistrés dans le navigateur du téléphone. Rien n'est envoyé sur un serveur. Il faut donc les saisir une fois sur chaque appareil.
+Les menus, les profils, le stock et la liste de courses peuvent être partagés entre deux téléphones grâce à Firestore. Dans Profils, on crée un foyer sur un téléphone puis on saisit le code affiché sur l'autre. Tout se synchronise ensuite en direct, et l'appli continue de marcher sans réseau.
+
+Les règles de sécurité Firestore sont dans le fichier firestore.rules. Elles imposent une connexion anonyme, interdisent de lister les foyers et limitent les champs acceptés. Seul quelqu'un qui connaît le code du foyer peut lire ou modifier ses données.
+
+Sans foyer, tout reste uniquement dans le navigateur du téléphone.
 
 ## Fichiers
 
 index.html contient toute l'appli.
 manifest.webmanifest et le dossier icons servent à l'installation sur l'écran d'accueil.
 sw.js permet l'utilisation hors ligne.
+firestore.rules contient les règles à coller dans la console Firebase.
