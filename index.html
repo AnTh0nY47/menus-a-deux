@@ -838,7 +838,7 @@ function weightSection(){
 function viewMoi(){
  const chev=ic("right").replace("<svg",'<svg class="chev"');
  const syncV=S.household?(SYNC.state==="ok"?"Synchronisé":SYNC.state==="err"?"Erreur":SYNC.state==="wait"?"Connexion…":"Activé"):"Désactivé";
- return `${weightSection()}
+ return `<div class="list" style="margin-top:6px"><button class="li" data-a="sheet" data-v="who"><div class="t"><b>Ce téléphone est à</b><small>Profil affiché à l'ouverture</small></div><div class="v">${S.owner!=null&&S.people[S.owner]?esc(S.people[S.owner].name):"À choisir"}</div>${chev}</button></div>${weightSection()}
  <div class="sec"><h2>Profils</h2></div><div class="list">${S.people.map((p,pi)=>{const t=targets(p);return `<button class="li" data-a="sheet" data-v="prof:${pi}"><div class="t"><b>${esc(p.name)}</b><small>${fr(t.kcal)} kcal · ${GOALS[p.goal][0].split(" (")[0]} · ${p.train.filter(Boolean).length} séances</small></div>${chev}</button>`}).join("")}</div>
  <div class="sec"><h2>Partage à deux</h2></div><div class="list"><button class="li" data-a="sheet" data-v="sync"><div class="t"><b>Foyer partagé</b><small>Menus, stock et courses sur les deux téléphones</small></div><div class="v">${syncV}</div>${chev}</button></div>
  <div class="sec"><h2>Menus</h2></div><div class="list">
@@ -871,6 +871,7 @@ function sheetSync(){
  if(S.household)return {kicker:"Partage",title:"Foyer partagé",body:`<p class="muted small" style="margin:0">Code à saisir sur l'autre téléphone :</p><div class="code">${fmtCode(S.household)}</div><div class="muted small" id="syncstate" style="text-align:center">${syncLabel()}</div>${err}<button class="btn pri full" data-a="copycode">${ic("copy")}Copier le code</button><button class="btn line danger full" data-a="leave">Quitter ce foyer</button><p class="muted tiny" style="margin:0">Garde ce code pour vous deux : toute personne qui l'a peut voir et modifier vos menus.</p>`};
  return {kicker:"Partage",title:"Foyer partagé",body:`<p class="muted small" style="margin:0">Partage les menus, le stock et la liste de courses avec l'autre téléphone, en direct. Crée le foyer sur un téléphone, puis entre le code sur l'autre.</p><button class="btn pri full" data-a="create">Créer un foyer</button><div class="sec" style="margin-top:8px"><h2>Ou rejoindre</h2></div><label class="field">Code du foyer<input id="joincode" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXX XXXX XXXX XXXX XXXX XXXX"></label><button class="btn line full" data-a="join">Rejoindre</button>${SYNC.state==="wait"?`<p class="muted small">Connexion…</p>`:""}${err}`};
 }
+function sheetWho(){return {kicker:"Ce téléphone",title:"Qui utilise ce téléphone ?",body:`<p class="muted small" style="margin:0">L'appli s'ouvrira toujours sur ton profil. Tu pourras quand même voir l'autre ou « Les deux » à tout moment.</p><div class="list">${S.people.map((p,pi)=>`<button class="li" data-a="owner" data-v="${pi}"><div class="t"><b>${esc(p.name)}</b></div>${S.owner===pi?`<span class="chip acc">C'est moi</span>`:ic("right").replace("<svg",'<svg class="chev"')}</button>`).join("")}</div>`}}
 function sheetExcl(){return {kicker:"Menus",title:"Aliments à éviter",body:`<div class="list">${EXCL.map(([k,l])=>`<button class="li" data-a="ex" data-v="${k}"><div class="t"><b>${l}</b></div>${sw(S.excl.includes(k))}</button>`).join("")}</div><p class="muted small" style="margin:0">Les plats qui en contiennent ne sont plus proposés.</p>`}}
 function sheetBanned(){const b=S.banned||[];return {kicker:"Menus",title:"Plats retirés",body:b.length?`<div class="list">${b.map(n=>`<div class="li"><div class="t"><b>${esc(n)}</b></div><button class="btn line" style="min-height:36px;padding:0 12px;font-size:14px" data-a="unban" data-v="${esc(n)}">Remettre</button></div>`).join("")}</div>`:`<div class="empty"><b>Aucun plat retiré</b>Appuie sur « Je n'aime pas » dans la fiche d'un plat pour le retirer des menus.</div>`}}
 function sheetRegen(){return {kicker:"Menus",title:"Nouveaux menus ?",body:`<p style="margin:0">Tous les plats du mois vont être tirés à nouveau. Les plats que tu as changés à la main et les cases cochées dans la liste de courses seront perdus.</p><button class="btn pri full" data-a="regen">Générer de nouveaux menus</button><button class="btn line full" data-a="close">Annuler</button>`}}
@@ -916,6 +917,7 @@ function renderSheet(){
  else if(o.t==="regen")c=sheetRegen();
  else if(o.t==="clearstock")c=sheetClear();
  else if(o.t==="wlog")c=sheetWlog();
+ else if(o.t==="who")c=sheetWho();
  if(!c){S.sheet=null;return renderSheet()}
  const keep=el.querySelector(".bdy"),top=keep&&el.classList.contains("open")&&el.dataset.key===JSON.stringify(o)?keep.scrollTop:0;
  el.dataset.key=JSON.stringify(o);
@@ -975,6 +977,7 @@ document.addEventListener("click",e=>{
   case "create":createFoyer();break;
   case "join":joinFoyer($("#joincode").value);break;
   case "leave":leaveFoyer();break;
+  case "owner":S.owner=+v;S.me=+v;S.sheet=null;saveLocal();render();break;
   case "copycode":copyText(fmtCode(S.household),b,"Code copié");break;
  }
 });
@@ -991,9 +994,11 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&S.sheet)closeSheet(
 /* ---------- Démarrage ---------- */
 if(S.tab==="menus")S.tab="jour";else if(S.tab==="profils")S.tab="moi";
 S.sheet=null;
+if(S.owner!=null&&S.people[S.owner])S.me=S.owner;
 buildPlan();
 {const t=todayIdx();if(t>=0)S.day=t;else if(S.day==null)S.day=0;S.week=Math.floor((S.day|0)/7)}
 render();
+if(S.owner==null)openSheet({t:"who"});
 if(S.household)subscribe();
 if("serviceWorker" in navigator&&location.protocol==="https:"){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{})})}
 </script>
