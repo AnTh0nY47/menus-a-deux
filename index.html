@@ -361,7 +361,7 @@ const DEFAULT={
  tab:"jour",week:0,seed:20261116,start:nextMonday(),days:30,excl:["fdm"],v:2,
  people:[
   {name:"Anthony",sex:"H",age:22,h:188,w:85,act:2,goal:"recompo",snack:true,lunch:"home",sweet:false,train:[true,true,false,true,true,false,false]},
-  {name:"Ma conjointe",sex:"F",age:22,h:165,w:60,act:1,goal:"recompo",snack:true,lunch:"alt",sweet:true,train:[false,true,false,false,true,false,false]}
+  {name:"Princesse",sex:"F",age:22,h:165,w:60,act:1,goal:"recompo",snack:true,lunch:"alt",sweet:true,train:[false,true,false,false,true,false,false]}
  ],
  checked:{}
 };
@@ -397,7 +397,7 @@ function applyRemote(d){
  SHARED.forEach(k=>{if(d[k]!==undefined)S[k]=d[k]});S.checked=d.checked||{};
  if(!S.done)S.done={};if(!S.stock)S.stock={};if(!S.ledger)S.ledger={};
  S.people.forEach((p,i)=>{if(!p.lunch)p.lunch=i===1?"alt":"home";if(p.sweet===undefined)p.sweet=i===1});
- lastPushed=JSON.stringify(sharedState());saveLocal();buildPlan();
+ lastPushed=JSON.stringify(sharedState());if(renamePrincess())schedulePush();saveLocal();buildPlan();
  const a=document.activeElement;if(!(a&&(a.tagName==="INPUT"||a.tagName==="SELECT")))render();
 }
 async function subscribe(){
@@ -993,6 +993,8 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&S.sheet)closeSheet(
 
 /* ---------- Démarrage ---------- */
 if(S.tab==="menus")S.tab="jour";else if(S.tab==="profils")S.tab="moi";
+function renamePrincess(){const p=S.people[1];if(p&&(p.name==="Ma conjointe"||p.name==="Personne 2")){p.name="Princesse";return true}return false}
+renamePrincess();
 S.sheet=null;
 if(S.owner!=null&&S.people[S.owner])S.me=S.owner;
 buildPlan();
