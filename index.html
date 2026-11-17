@@ -295,7 +295,7 @@ const MAINS=[
  {n:"Crevettes sautées, riz et légumes",how:"Crevettes et légumes au wok, sauce soja en fin de cuisson.",t:[10,15],st:["Lance le riz.","Fais sauter brocoli et carottes en lamelles dans l'huile 6 min à feu vif.","Ajoute les crevettes 3 min.","Verse la sauce soja, mélange et sers sur le riz."],prot:"crevettes",carb:"riz",fat:"huile",fx:{brocoli:100,carottes:80,soja:15}},
  {n:"Filet mignon, patate douce et carottes",how:"Filet mignon au four 25 min avec patate douce et carottes en cubes.",t:[10,30],st:["Préchauffe le four à 200 °C.","Coupe patate douce et carottes en cubes, mélange avec l'huile, sel et thym sur une plaque.","Enfourne 10 min, puis ajoute le filet mignon assaisonné au milieu.","Cuis encore 20 à 25 min, laisse reposer la viande 5 min avant de trancher."],prot:"porc",carb:"patdouce",fat:"huile",fx:{carottes:150}},
  {n:"Salade de lentilles au thon",how:"Lentilles cuites 12 min puis refroidies, thon, tomates, vinaigrette.",t:[10,12],st:["Rince les lentilles corail et cuis-les 10 à 12 min à l'eau, elles doivent rester un peu fermes.","Égoutte et passe-les sous l'eau froide.","Coupe les tomates, prépare la vinaigrette avec l'huile.","Mélange lentilles, thon, tomates, vinaigrette et sers sur la salade."],prot:"thon",carb:"lentilles",fat:"huile",fx:{tomates:120,salade:50}},
- {n:"Bowl thon, quinoa et avocat",how:"Quinoa, thon, avocat, tomates et salade, filet de citron.",t:[10,15],st:["Rince le quinoa et cuis-le 12 à 15 min dans deux fois son volume d'eau.","Coupe l'avocat et les tomates.","Dispose quinoa, salade, thon, avocat et tomates dans un bol.","Assaisonne avec citron, sel et poivre."],prot:"thon",carb:"quinoa",fat:null,fx:{avocat:40,tomates:80,salade:50}},
+ {n:"Bowl thon, quinoa et avocat",how:"Quinoa, thon, avocat, tomates et salade, filet de citron.",t:[10,15],st:["Rince le quinoa et cuis-le 12 à 15 min dans deux fois son volume d'eau.","Coupe l'avocat et les tomates.","Dispose quinoa, salade, thon, avocat et tomates dans un bol.","Assaisonne avec citron, sel et poivre."],prot:"thon",carb:"quinoa",fat:"avocat",fx:{tomates:80,salade:50}},
  {n:"Gratin de pâtes au jambon",how:"Pâtes, jambon, brocolis et un peu de lait, emmental dessus, 15 min au four.",t:[10,25],st:["Préchauffe le four à 200 °C et cuis les pâtes 2 min de moins que le temps indiqué.","Cuis le brocoli 5 min à l'eau.","Mélange pâtes, brocoli, jambon en dés et lait dans un plat, poivre et muscade.","Parsème d'emmental et enfourne 15 min."],prot:"jambon",carb:"pates",fat:"emmental",fx:{brocoli:150,lait:50}},
  {n:"Couscous de poulet aux légumes",how:"Poulet, courgettes, carottes et pois chiches mijotés dans un bouillon de légumes au cumin doux.",t:[15,30],st:["Coupe le poulet en morceaux et fais-le dorer dans l'huile 5 min.","Ajoute carottes en rondelles et courgettes en gros dés, un cube de bouillon de légumes, le cumin doux et de l'eau à hauteur.","Laisse mijoter 25 min, ajoute les pois chiches les 5 dernières minutes.","Verse de l'eau bouillante sur la semoule, couvre 5 min, égraine et sers avec le bouillon."],prot:"poulet",carb:"semoule",fat:"huile",fx:{courgette:120,carottes:80,pchiches:60}},
  {n:"Steak haché, potatoes et salade",how:"Pommes de terre en quartiers au four avec l'huile et le paprika doux.",t:[10,35],st:["Préchauffe le four à 210 °C.","Coupe les pommes de terre en quartiers, mélange avec l'huile, sel et paprika doux.","Enfourne 30 à 35 min en retournant à mi-cuisson.","Cuis les steaks à la poêle 2 à 3 min par face, sers avec salade et tomates."],prot:"boeuf5",carb:"pdt",fat:"huile",fx:{salade:80,tomates:100}},
@@ -322,7 +322,7 @@ const BKF=[
  {n:"Fromage blanc, avoine et fruits rouges",how:"Fromage blanc, flocons d'avoine, fruits rouges décongelés, amandes et un filet de miel.",t:[3,0],st:["La veille, sors les fruits rouges au frigo ou passe-les 1 min au micro-ondes.","Mélange fromage blanc et avoine.","Ajoute fruits rouges, amandes et miel."],prot:"fblanc",carb:"avoine",fat:"amandes",fx:{frouges:100,miel:10}},
  {n:"Pancakes à l'avoine",how:"Avoine mixée avec œufs, lait et banane, petits pancakes à la poêle.",t:[5,10],st:["Mixe l'avoine, les œufs, le lait et la banane.","Fais cuire des petits pancakes dans une poêle antiadhésive, 1 à 2 min par face.","Sers nature ou avec un peu de miel."],prot:"oeuf",carb:"avoine",fat:null,fx:{lait:100,banane:120}},
  {n:"Tartines beurre de cacahuète et fromage blanc",how:"Pain complet au beurre de cacahuète, fromage blanc, banane.",t:[3,2],st:["Fais griller le pain.","Tartine le beurre de cacahuète, ajoute des rondelles de banane.","Le fromage blanc à côté, à la cuillère."],prot:"fblanc",carb:"painc",fat:"cacahuete",fx:{banane:120}},
- {n:"Overnight oats au fromage blanc",how:"La veille : avoine, fromage blanc, lait et miel au frigo. Le matin : pomme en dés.",t:[5,0],st:["La veille au soir, mélange avoine, fromage blanc, lait et miel dans un bocal.","Laisse au frigo toute la nuit.","Le matin, ajoute la pomme en dés."],prot:"fblanc",carb:"avoine",fat:null,fx:{lait:100,pomme:150,miel:10}}
+ {n:"Overnight oats au fromage blanc",how:"La veille : avoine, fromage blanc, lait et miel au frigo. Le matin : pomme en dés et amandes.",t:[5,0],st:["La veille au soir, mélange avoine, fromage blanc, lait et miel dans un bocal.","Laisse au frigo toute la nuit.","Le matin, ajoute la pomme en dés et les amandes concassées."],prot:"fblanc",carb:"avoine",fat:"amandes",fx:{lait:100,pomme:150,miel:10}}
 ];
 const SNK=[
  {n:"Fromage blanc, amandes et banane",how:"",t:[2,0],st:["Fromage blanc dans un bol, banane en rondelles et amandes par-dessus."],prot:"fblanc",carb:"banane",fat:"amandes",fx:{}},
@@ -433,7 +433,9 @@ function targets(p){
  const tdee=bmr*ACT[p.act][1];
  const g=GOALS[p.goal];
  const kcal=Math.round(tdee*(1+g[1])+(p.adj||0));
- const P=Math.round(p.w*g[2]);
+ /* protéines : g par kg sur un poids de référence plafonné à un IMC de 25 (plus un quart de l'excédent), un peu moins chez la femme */
+ const wRef=Math.min(p.w,25*(p.h/100)**2)+0.25*Math.max(0,p.w-25*(p.h/100)**2);
+ const P=Math.round(wRef*g[2]*(p.sex==="F"?0.9:1));
  let L=Math.round(p.w*(p.sex==="H"?0.9:1.0));
  L=Math.max(L,Math.round(kcal*0.22/9));
  const G=Math.max(0,Math.round((kcal-4*P-9*L)/4));
@@ -477,21 +479,72 @@ function portion(rec,T,s,Tb){
 }
 const sub=(a,b)=>({p:a.p-b.p,l:a.l-b.l,g:a.g-b.g});
 const mul=(a,f)=>({p:a.p*f,l:a.l*f,g:a.g*f});
-/* Portions d'une personne pour un jour : petit déj et collation d'abord, puis midi et dîner absorbent l'écart pour coller à l'objectif du jour */
+/* Fourchettes réalistes par aliment et par type de repas, en grammes crus (les œufs, bananes, pommes et tortillas comptent à la pièce) */
+const BOUNDS={
+ main:{riz:[50,165],pates:[50,165],semoule:[50,165],quinoa:[50,145],pdt:[160,400],patdouce:[160,400],tortilla:[60,240],painc:[50,140],lentilles:[45,155],
+  poulet:[95,245],dinde:[95,245],boeuf5:[95,245],rumsteck:[95,245],porc:[95,245],jambon:[60,195],thon:[65,200],crevettes:[95,245],oeuf:[110,275],
+  huile:[0,18],beurre:[0,18],creme:[20,75],emmental:[15,45],pesto:[10,32],avocat:[40,150]},
+ bkf:{avoine:[35,115],painc:[45,135],whey:[10,38],fblanc:[100,320],oeuf:[110,220],beurre:[0,12],cacahuete:[10,28],amandes:[10,32]},
+ snack:{fblanc:[100,290],whey:[15,38],banane:[60,240],avoine:[20,65],pomme:[75,300],choco:[10,24],jambon:[40,115],painc:[35,95],beurre:[0,8],amandes:[10,28],frouges:[60,240]}
+};
+const BREAD=[0,100];
+/* les fourchettes s'adaptent au gabarit : un peu plus basses pour un petit appétit, un peu plus hautes pour un gros */
+const NOSCALEHI=["pdt","patdouce","oeuf","tortilla","frouges","banane","pomme"];
+function boundsFor(kind,f,sz,role){const b=BOUNDS[kind][f]||[0,F[f].max||300];let lo=b[0],hi=b[1];
+ if(role==="carb"||role==="bread"||role==="prot"){lo=lo*clamp(sz,role==="prot"?0.8:0.7,1);if(role!=="prot"&&!NOSCALEHI.includes(f))hi=hi*clamp(sz,1,1.25)}
+ return [Math.round(lo),Math.round(hi)]}
+function fixedItems(rec,s){const items={};for(const k in rec.fx){let r=roundItem(k,rec.fx[k]*s);const st=F[k].pc?F[k].pc*(F[k].step||1):0;if(st&&r<st)r=st;if(r>0)items[k]=(items[k]||0)+r}return items}
+/* Portions d'une journée : un calcul d'optimisation sur toute la journée.
+   Il vise les protéines, glucides, lipides et calories du jour, garde chaque repas proche de sa part habituelle,
+   et chaque aliment reste dans une fourchette réaliste pour ce repas. */
 function personDay(pi,i){
  const p=S.people[pi],day=PLAN[i];if(!day)return null;
  const tr=!!p.train[dow(day.date)],out=eatsOut(p,day.date),sh=shares(p.snack),t=dayTarget(p,tr);
- const s=clamp(t.kcal/2800,0.65,1.15);
+ const s=clamp(t.kcal/2800,0.65,1.15),sz=clamp(t.kcal/2800,0.6,1.25);
  const f=out?1-sh.lunch:1;
- let rem={p:t.P*f,l:t.L*f,g:t.G*f};
- const res={bkf:null,lunch:null,snack:null,dinner:null,out,tr,target:{kcal:Math.round(t.kcal*f),P:Math.round(t.P*f),G:Math.round(t.G*f),L:Math.round(t.L*f)},recs:{}};
- ["bkf","snack"].forEach(k=>{if(!sh[k])return;const r=recFor(p,day,k,i);res.recs[k]=r;res[k]=portion(r,mul({p:t.P,l:t.L,g:t.G},sh[k]),s);rem=sub(rem,macrosOf(res[k]))});
- res.recs.lunch=day.lunch;res.recs.dinner=day.dinner;
- /* midi et dîner : leur part normale, corrigée de l'écart du reste de la journée, sans dépasser 25 % par macro */
- const T0={p:t.P,l:t.L,g:t.G};
- const bounded=(base,want)=>({p:clamp(want.p,base.p*0.7,base.p*1.3),l:clamp(want.l,base.l*0.5,base.l*1.4),g:clamp(want.g,base.g*0.55,base.g*1.3)});
- if(!out){const fl=sh.lunch/(sh.lunch+sh.dinner),Bl=mul(T0,sh.lunch);res.lunch=portion(day.lunch,bounded(Bl,mul(rem,fl)),s,Bl);rem=sub(rem,macrosOf(res.lunch))}
- const Bd=mul(T0,sh.dinner);res.dinner=portion(day.dinner,bounded(Bd,rem),s,Bd);
+ const T={p:t.P*f,l:t.L*f,g:t.G*f};T.k=4*T.p+9*T.l+4*T.g;
+ const res={bkf:null,lunch:null,snack:null,dinner:null,out,tr,target:{kcal:Math.round(t.kcal*f),P:Math.round(T.p),G:Math.round(T.g),L:Math.round(T.l)},recs:{}};
+ const meals=[];
+ ["bkf","lunch","snack","dinner"].forEach(k=>{
+  if(!sh[k])return;if(k==="lunch"&&out){res.recs.lunch=day.lunch;return}
+  const rec=k==="bkf"||k==="snack"?recFor(p,day,k,i):day[k];res.recs[k]=rec;
+  const kind=k==="bkf"?"bkf":k==="snack"?"snack":"main";
+  const fixed=fixedItems(rec,s),fm=macrosOf(fixed);
+  const share={p:t.P*sh[k],l:t.L*sh[k],g:t.G*sh[k]};
+  const init=portion(rec,share,s,share);
+  const vars=[];
+  const addVar=(food,role)=>{if(!food)return;const b=boundsFor(kind,food,sz,role);const x0=clamp((init[food]||0)-(fixed[food]||0),b[0],b[1]);vars.push({food,role,lo:b[0],hi:b[1],x:x0,x0,sc:Math.max(x0,(b[1]-b[0])/2,30)})};
+  addVar(rec.prot,"prot");if(rec.carb&&rec.carb!==rec.prot)addVar(rec.carb,"carb");if(rec.fat)addVar(rec.fat,"fat");
+  /* pain complet en accompagnement, utilisé seulement si le plat ne suffit pas */
+  if(kind==="main"&&!["painc","tortilla"].includes(rec.carb)&&!rec.fx.painburger){vars.push({food:"painc",role:"bread",lo:0,hi:Math.round(BREAD[1]*clamp(sz,1,1.25)),x:0,x0:0,sc:60})}
+  meals.push({k,rec,kind,fixed,fm,vars,kt:t.kcal*sh[k]});
+ });
+ const W={p:5,g:1.2,l:1.5,k:3,m:0.6,r:0.004};
+ /* totaux tenus à jour au fil des ajustements, pour que le calcul reste rapide sur téléphone */
+ const D={P:0,L:0,G:0};
+ meals.forEach(m=>{m.K=4*m.fm.p+9*m.fm.l+4*m.fm.g;D.P+=m.fm.p;D.L+=m.fm.l;D.G+=m.fm.g;m.vars.forEach(v=>{const fd=F[v.food],q=v.x/100;v.ap=fd.p/100;v.al=fd.l/100;v.ag=fd.g/100;v.ak=4*v.ap+9*v.al+4*v.ag;D.P+=fd.p*q;D.L+=fd.l*q;D.G+=fd.g*q;m.K+=v.ak*v.x})});
+ const iP=1/(T.p*T.p),iG=1/(T.g*T.g),iL=1/(T.l*T.l),iK=1/(T.k*T.k);
+ for(let it=0;it<150;it++){
+  let moved=0;
+  for(const m of meals){const iM=1/(m.kt*m.kt);for(const v of m.vars){
+   const K=4*D.P+9*D.L+4*D.G,iS=1/(v.sc*v.sc);
+   const d1=2*W.p*(D.P-T.p)*iP*v.ap+2*W.g*(D.G-T.g)*iG*v.ag+2*W.l*(D.L-T.l)*iL*v.al+2*W.k*(K-T.k)*iK*v.ak+2*W.m*(m.K-m.kt)*iM*v.ak+2*W.r*(v.x-v.x0)*iS;
+   const d2=2*W.p*v.ap*v.ap*iP+2*W.g*v.ag*v.ag*iG+2*W.l*v.al*v.al*iL+2*W.k*v.ak*v.ak*iK+2*W.m*v.ak*v.ak*iM+2*W.r*iS;
+   const nx=clamp(v.x-d1/d2,v.lo,v.hi),dx=nx-v.x;if(!dx)continue;
+   v.x=nx;D.P+=v.ap*dx;D.L+=v.al*dx;D.G+=v.ag*dx;m.K+=v.ak*dx;moved+=Math.abs(dx);
+  }}
+  if(moved<0.05)break;
+ }
+ meals.forEach(m=>{
+  const items=Object.assign({},m.fixed);
+  m.vars.forEach(v=>{
+   let r=roundItem(v.food,v.x);const fd=F[v.food];
+   if(fd.pc){const st=fd.pc*(fd.step||1);r=clamp(r,Math.ceil(v.lo/st-1e-9)*st,Math.floor(v.hi/st+1e-9)*st)}else r=clamp(r,v.lo,v.hi);
+   if(v.role==="bread"&&r<25)r=0;
+   if(r>0)items[v.food]=(items[v.food]||0)+r;
+  });
+  res[m.k]=items;
+ });
  return res;
 }
 const DCACHE=new Map();
@@ -686,8 +739,13 @@ function summaryCard(i){
   return `<div class="card stack">${S.people.map((p,pi)=>{const d=pd(pi,i);const m=macrosOf(sumItems([d.bkf,d.lunch,d.snack,d.dinner]));return `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div><b>${esc(p.name)}</b><div class="chips" style="margin-top:4px"><span class="chip${d.tr?" acc":""}">${d.tr?"Jour de salle":"Repos"}</span>${d.out?`<span class="chip">Midi en entreprise</span>`:""}</div></div><div class="num" style="text-align:right"><b>${fr(m.kcal)}</b> <span class="muted small">/ ${fr(d.target.kcal)} kcal</span></div></div>`}).join(`<div style="border-top:1px solid var(--line)"></div>`)}<p class="muted small" style="margin:0">Les fiches des repas donnent les quantités à cuisiner pour vous deux.</p></div>`;
  }
  const d=pd(S.me,i),t=d.target,m=macrosOf(sumItems([d.bkf,d.lunch,d.snack,d.dinner]));
- return `<div class="card stack"><div class="sum">${ring(m.kcal,t.kcal)}<div class="bars">${bar("p","Protéines",m.p,t.P)}${bar("g","Glucides",m.g,t.G)}${bar("l","Lipides",m.l,t.L)}</div></div><div class="chips"><span class="chip${d.tr?" acc":""}">${d.tr?"Jour de salle":"Jour de repos"}</span>${d.out?`<span class="chip">Midi en entreprise</span>`:""}${S.people[S.me].adj?`<span class="chip">Calories ajustées de ${S.people[S.me].adj>0?"+":""}${S.people[S.me].adj}</span>`:""}</div></div>`;
+ return `<div class="card stack"><div class="sum">${ring(m.kcal,t.kcal)}<div class="bars">${bar("p","Protéines",m.p,t.P)}${bar("g","Glucides",m.g,t.G)}${bar("l","Lipides",m.l,t.L)}</div></div><div class="chips"><span class="chip${d.tr?" acc":""}">${d.tr?"Jour de salle":"Jour de repos"}</span>${d.out?`<span class="chip">Midi en entreprise</span>`:""}${S.people[S.me].adj?`<span class="chip">Calories ajustées de ${S.people[S.me].adj>0?"+":""}${S.people[S.me].adj}</span>`:""}</div>${gapNote(S.people[S.me],m.kcal,t.kcal)}</div>`;
 }
+/* si les plats du jour ne suffisent pas à atteindre l'objectif, on le dit et on propose quoi ajouter */
+function gapNote(p,k,t){const gap=t-k;
+ if(gap>t*0.07)return `<div class="note small" style="margin:0">Il manque environ ${fr(Math.round(gap/10)*10)} kcal aujourd'hui. ${p.snack?"Ajoute un fruit et une poignée d'amandes, ou une tranche de pain au repas.":"Active la collation dans ton profil, ou ajoute un fruit et une tranche de pain au repas."}</div>`;
+ if(-gap>t*0.07)return `<div class="note small" style="margin:0">Journée un peu au-dessus de ton objectif, d'environ ${fr(Math.round(-gap/10)*10)} kcal. Rien de grave sur une journée.</div>`;
+ return ""}
 function mealMeta(day,i,k,rec){
  const out=[];
  if(mins(rec))out.push(`<span class="chip">${mins(rec)} min</span>`);
@@ -730,7 +788,8 @@ function sheetMeal(o){
  if(sel==="all"&&who.length<2)sel=who[0];
  const nx=PLAN[i+1],boxes=k==="dinner"&&nx&&nx.left&&nx.lunch===rec;
  const rank=x=>x===rec.prot?0:x===rec.carb?1:x===rec.fat?3:2;
- const ingList=items=>`<div class="list ing">${Object.keys(items).sort((a,b)=>rank(a)-rank(b)).map(x=>`<div class="li"><div class="t"><b>${esc(F[x].n)}</b></div><div class="v">${qty(x,items[x])}</div></div>`).join("")}</div>`;
+ const side=x=>x==="painc"&&rec.carb!=="painc"&&(k==="lunch"||k==="dinner");
+ const ingList=items=>`<div class="list ing">${Object.keys(items).sort((a,b)=>rank(a)-rank(b)).map(x=>`<div class="li"><div class="t"><b>${esc(F[x].n)}</b>${side(x)?"<small>en accompagnement</small>":""}</div><div class="v">${qty(x,items[x])}</div></div>`).join("")}</div>`;
  let body="";
  if(who.length>1){const opts=who.map(pi=>[pi,first(S.people[pi])]);opts.push(["all","Les deux"]);body+=seg(opts,sel,"msel")}
  if(sel==="all"){
@@ -898,7 +957,6 @@ function topBar(){
  return `<header class="top"><div><h1>${esc(t[0].toUpperCase()+t.slice(1))}</h1>${sub?`<div class="sub">${esc(sub)}</div>`:""}</div>${sync}</header>`;
 }
 function render(){
- DCACHE.clear();
  if(!TABS.some(x=>x[0]===S.tab))S.tab="jour";
  if(S.me==null||(S.me!=="all"&&!S.people[S.me]))S.me=0;
  S.day=clamp(S.day|0,0,S.days-1);
@@ -934,7 +992,7 @@ function renderSheet(){
  el.querySelector(".bdy").scrollTop=top;
 }
 function setSync(state,msg){SYNC={state,msg:msg||""};const p=document.getElementById("syncpill");if(p){p.className="sync "+state;p.innerHTML=`<i></i>${state==="ok"?"Synchronisé":state==="err"?"Erreur":state==="wait"?"Connexion":"Partagé"}`}const el=document.getElementById("syncstate");if(el)el.textContent=syncLabel()}
-function refresh(full){if(full)buildPlan();save();render()}
+function refresh(full){DCACHE.clear();if(full)buildPlan();save();render()}
 function openSheet(o){S.sheet=o;renderSheet()}
 function closeSheet(){S.sheet=null;renderSheet()}
 function fallback(t){const ta=$("#clip");ta.value=t;ta.select();try{document.execCommand("copy")}catch(e){}}
@@ -999,7 +1057,7 @@ document.addEventListener("change",e=>{
 });
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&S.sheet)closeSheet();if(e.key==="Enter"&&e.target.id==="wkg"){const b=document.querySelector('[data-a="addw"]');if(b)b.click()}});
 
-const APPV="2026-11-17";
+const APPV="2026-11-17b";
 /* ---------- Démarrage ---------- */
 if(S.tab==="menus")S.tab="jour";else if(S.tab==="profils")S.tab="moi";
 function renamePrincess(){const p=S.people[1];if(p&&(p.name==="Ma conjointe"||p.name==="Personne 2")){p.name="Princesse";return true}return false}
