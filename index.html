@@ -247,8 +247,8 @@ const F={
  pates:{n:"Pâtes crues",p:12,l:1.5,g:70,r:"Féculents",max:200},
  semoule:{n:"Semoule crue",p:12,l:1.5,g:70,r:"Féculents",max:200},
  quinoa:{n:"Quinoa cru",p:14,l:6,g:58,r:"Féculents",max:180},
- pdt:{n:"Pommes de terre",p:2,l:0.1,g:17,r:"Fruits et légumes",max:650},
- patdouce:{n:"Patate douce",p:1.6,l:0.1,g:20,r:"Fruits et légumes",max:550},
+ pdt:{n:"Pommes de terre",p:2,l:0.1,g:17,r:"Fruits et légumes",max:400},
+ patdouce:{n:"Patate douce",p:1.6,l:0.1,g:20,r:"Fruits et légumes",max:400},
  painc:{n:"Pain complet",p:9,l:3,g:45,r:"Féculents",max:180},
  painburger:{n:"Pain burger",p:9,l:5,g:48,r:"Féculents",pc:80,unit:["pain burger","pains burger"],step:1},
  tortilla:{n:"Tortilla de blé",p:8,l:7,g:50,r:"Féculents",pc:60,unit:["tortilla","tortillas"],max:240},
@@ -468,8 +468,11 @@ function portion(rec,T,s,Tb){
  }
  /* sans matière grasse réglable : on rattrape les calories manquantes ou en trop sur le féculent */
  if(!Fa&&C){const now=macrosOf(Object.assign({},items,{[rec.prot]:xp,[rec.carb]:(items[rec.carb]||0)+xc}));const tk=4*T.p+9*T.l+4*T.g;xc=clamp(xc+(tk-now.kcal)/(4*C.g/100+4*C.p/100+9*C.l/100),minC,C.max||400)}
+ /* féculent plafonné (pommes de terre, patate douce) : le reste des glucides vient du pain */
+ let bread=0;
+ if(C&&C.max&&xc>=C.max-1&&rec.carb!=="painc"&&MAINS.includes(rec)){const cur=macrosOf(Object.assign({},items,{[rec.prot]:xp,[rec.carb]:xc}));const miss=T.g-cur.g;if(miss>10)bread=Math.min(120,miss/0.45)}
  const add=(k,g)=>{let r=roundItem(k,g);if(k===rec.prot&&F[k].pc&&r<F[k].pc)r=F[k].pc;if(r>0)items[k]=(items[k]||0)+r};
- add(rec.prot,xp);if(C)add(rec.carb,xc);if(Fa)add(rec.fat,xf);
+ add(rec.prot,xp);if(C)add(rec.carb,xc);if(Fa)add(rec.fat,xf);if(bread>=20)add("painc",bread);
  return items;
 }
 const sub=(a,b)=>({p:a.p-b.p,l:a.l-b.l,g:a.g-b.g});
@@ -855,7 +858,7 @@ function viewMoi(){
   <button class="li" data-a="sheet" data-v="regen"><div class="t"><b>Générer de nouveaux menus</b></div>${chev}</button>
  </div>
  <div class="sec"><h2>Courses</h2></div><div class="list"><button class="li" data-a="cheap"><div class="t"><b>Prix bas</b><small>Viande surgelée et gros paquets</small></div>${sw(S.cheap)}</button></div>
- <p class="muted tiny" style="margin:18px 4px 0">Besoins estimés avec la formule de Mifflin-St Jeor, puis ajustés par le suivi du poids. Les quantités sont en poids crus.</p>`;
+ <p class="muted tiny" style="margin:18px 4px 0">Version ${APPV}. Besoins estimés avec la formule de Mifflin-St Jeor, puis ajustés par le suivi du poids. Les quantités sont en poids crus.</p>`;
 }
 function sheetProfile(pi){
  const p=S.people[pi],t=targets(p);
@@ -996,6 +999,7 @@ document.addEventListener("change",e=>{
 });
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&S.sheet)closeSheet();if(e.key==="Enter"&&e.target.id==="wkg"){const b=document.querySelector('[data-a="addw"]');if(b)b.click()}});
 
+const APPV="2026-11-17";
 /* ---------- Démarrage ---------- */
 if(S.tab==="menus")S.tab="jour";else if(S.tab==="profils")S.tab="moi";
 function renamePrincess(){const p=S.people[1];if(p&&(p.name==="Ma conjointe"||p.name==="Personne 2")){p.name="Princesse";return true}return false}
@@ -1007,7 +1011,7 @@ buildPlan();
 render();
 if(S.owner==null)openSheet({t:"who"});
 if(S.household)subscribe();
-if("serviceWorker" in navigator&&location.protocol==="https:"){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{})})}
+if("serviceWorker" in navigator&&location.protocol==="https:"){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").then(r=>{r.update&&r.update()}).catch(()=>{});let reloaded=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(reloaded)return;reloaded=true;location.reload()})})}
 </script>
 </body>
 </html>
