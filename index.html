@@ -432,13 +432,19 @@ function targets(p){
  const bmr=10*p.w+6.25*p.h-5*p.age+(p.sex==="H"?5:-161);
  const tdee=bmr*ACT[p.act][1];
  const g=GOALS[p.goal];
- const kcal=Math.round(tdee*(1+g[1])+(p.adj||0));
- /* protéines : g par kg sur un poids de référence plafonné à un IMC de 25 (plus un quart de l'excédent), un peu moins chez la femme */
+ /* jamais sous le métabolisme de base ni sous 1 200 kcal (femme) ou 1 500 kcal (homme), même avec un ajustement */
+ let kcal=Math.round(tdee*(1+g[1])+(p.adj||0));
+ kcal=Math.max(kcal,Math.round(bmr),p.sex==="F"?1200:1500);
+ /* protéines et lipides : g par kg sur un poids de référence plafonné à un IMC de 25 (plus un quart de l'excédent), un peu moins de protéines chez la femme */
  const wRef=Math.min(p.w,25*(p.h/100)**2)+0.25*Math.max(0,p.w-25*(p.h/100)**2);
- const P=Math.round(wRef*g[2]*(p.sex==="F"?0.9:1));
- let L=Math.round(p.w*(p.sex==="H"?0.9:1.0));
- L=Math.max(L,Math.round(kcal*0.22/9));
- const G=Math.max(0,Math.round((kcal-4*P-9*L)/4));
+ const fP=p.sex==="F"?0.9:1;
+ let P=Math.round(wRef*g[2]*fP);
+ let L=Math.min(Math.max(Math.round(wRef*(p.sex==="H"?0.9:1.0)),Math.round(kcal*0.22/9)),Math.round(kcal*0.35/9));
+ let G=Math.round((kcal-4*P-9*L)/4);
+ /* au moins 100 g de glucides : on rabote d'abord les lipides, puis les protéines, jusqu'à des minimums raisonnables */
+ if(G<100){L=Math.max(Math.round(wRef*0.6),Math.round(kcal*0.2/9));G=Math.round((kcal-4*P-9*L)/4)}
+ if(G<100){P=Math.max(Math.round(wRef*1.6*fP),Math.round((kcal-9*L-400)/4));G=Math.round((kcal-4*P-9*L)/4)}
+ G=Math.max(G,100);kcal=4*P+9*L+4*G;
  return {kcal,P,L,G,tdee:Math.round(tdee)};
 }
 function dayTarget(p,isTrain){
@@ -783,6 +789,7 @@ function sheetMeal(o){
  const i=o.i,k=o.k,day=PLAN[i];if(!day)return null;
  const rec=byName(o.n)||day[k];
  const who=S.people.map((p,pi)=>pi).filter(pi=>{const d=pd(pi,i);return d[k]&&(d.recs[k]||day[k])===rec});
+ if(!who.length)return null;
  let sel=o.sel!=null?o.sel:(S.me==="all"?"all":(who.includes(S.me)?S.me:who[0]));
  if(sel!=="all"&&!who.includes(+sel))sel=who[0];
  if(sel==="all"&&who.length<2)sel=who[0];
@@ -1057,7 +1064,7 @@ document.addEventListener("change",e=>{
 });
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&S.sheet)closeSheet();if(e.key==="Enter"&&e.target.id==="wkg"){const b=document.querySelector('[data-a="addw"]');if(b)b.click()}});
 
-const APPV="2026-11-17b";
+const APPV="2026-11-18";
 /* ---------- Démarrage ---------- */
 if(S.tab==="menus")S.tab="jour";else if(S.tab==="profils")S.tab="moi";
 function renamePrincess(){const p=S.people[1];if(p&&(p.name==="Ma conjointe"||p.name==="Personne 2")){p.name="Princesse";return true}return false}

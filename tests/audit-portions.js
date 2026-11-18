@@ -1,5 +1,5 @@
 // Audit automatique des portions : charge l'appli dans jsdom et vérifie chaque repas
-const {JSDOM}=require('jsdom');const fs=require('fs');
+const {JSDOM}=require(process.env.JSDOM||'jsdom');const fs=require('fs');
 let html=fs.readFileSync(require('path').join(__dirname,'..','index.html'),'utf8').replace(/<script src="https:\/\/www.gstatic[^<]*<\/script>/g,'').replace(/<link[^>]*fonts[^>]*>/g,'');
 const dom=new JSDOM(html,{runScripts:'dangerously',url:'https://anth0ny47.github.io/menus-a-deux/',pretendToBeVisual:true,beforeParse(w){w.scrollTo=()=>{}}});
 const QUICK=process.argv.includes('--quick');
