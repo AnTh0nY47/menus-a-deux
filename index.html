@@ -360,10 +360,10 @@ function eatsOut(p,date){
 /* ---------- État ---------- */
 function nextMonday(){const d=new Date();d.setHours(12,0,0,0);const k=(8-d.getDay())%7||7;d.setDate(d.getDate()+k);return d.toISOString().slice(0,10)}
 const DEFAULT={
- tab:"jour",week:0,seed:20261116,start:nextMonday(),days:28,excl:["fdm"],v:4,
+ tab:"jour",week:0,seed:20261116,start:nextMonday(),days:28,excl:["fdm"],v:5,
  people:[
   {name:"Anthony",sex:"H",age:22,h:188,w:85,act:2,goal:"recompo",snack:false,lunch:"home",sweet:false,bkfFixed:"",train:[true,true,false,true,true,false,false]},
-  {name:"Princesse",sex:"F",age:22,h:165,w:66,goalMin:50,goalMax:60,act:1,goal:"perte",snack:false,lunch:"alt",sweet:true,bkfFixed:"Flocons d'avoine, muesli chocolat et lait",train:[false,true,false,false,true,false,false]}
+  {name:"Princesse",sex:"F",age:22,h:160,w:66,goalMin:50,goalMax:60,act:0,goal:"perte",snack:false,lunch:"alt",sweet:true,bkfFixed:"Flocons d'avoine, muesli chocolat et lait",train:[false,false,false,false,false,false,false]}
  ],
  checked:{}
 };
@@ -442,7 +442,9 @@ function targets(p){
  let wRef=Math.min(p.w,25*(p.h/100)**2)+0.25*Math.max(0,p.w-25*(p.h/100)**2);
  if(p.goal==="perte"&&p.goalMax>0)wRef=Math.min(wRef,Math.max(p.goalMax,p.w-15));
  const fP=p.sex==="F"?0.9:1;
- let P=Math.round(wRef*g[2]*fP);
+ /* sans aucune séance de sport, 1,6 g/kg suffit largement : au-delà, ça n'apporte rien et ça impose de grosses portions de viande */
+ const sport=p.act>0&&(p.train||[]).some(Boolean);
+ let P=Math.round(wRef*(sport?g[2]:Math.min(g[2],1.6))*fP);
  let L=Math.min(Math.max(Math.round(wRef*(p.sex==="H"?0.9:1.0)),Math.round(kcal*0.22/9)),Math.round(kcal*0.35/9));
  let G=Math.round((kcal-4*P-9*L)/4);
  /* au moins 100 g de glucides : on rabote d'abord les lipides, puis les protéines, jusqu'à des minimums raisonnables */
@@ -451,9 +453,12 @@ function targets(p){
  G=Math.max(G,100);kcal=4*P+9*L+4*G;
  return {kcal,P,L,G,tdee:Math.round(tdee)};
 }
+/* les jours de salle ont un peu plus de glucides que les jours de repos (15 % d'écart),
+   mais la moyenne de la semaine reste égale à la cible : la dépense calculée inclut déjà les séances */
 function dayTarget(p,isTrain){
- const t=targets(p);
- const G=isTrain?t.G:Math.round(t.G*0.85);
+ const t=targets(p),n=(p.train||[]).filter(Boolean).length;
+ let G=t.G;
+ if(n>0&&n<7)G=Math.round(isTrain?t.G*(1+0.15*(7-n)/7):t.G*(1-0.15*n/7));
  return {P:t.P,L:t.L,G,kcal:Math.round(4*t.P+9*t.L+4*G)};
 }
 function shares(snack){return snack?{bkf:.25,lunch:.32,snack:.13,dinner:.30}:{bkf:.28,lunch:.37,snack:0,dinner:.35}}
@@ -504,6 +509,7 @@ const HARDMAX={main:{riz:200,pates:200,semoule:200,quinoa:180,lentilles:190,pain
 const NOSCALEHI=["pdt","patdouce","oeuf","tortilla","frouges","banane","pomme"];
 function boundsFor(kind,f,sz,role){const b=BOUNDS[kind][f]||[0,F[f].max||300];let lo=b[0],hi=b[1];
  if(role==="carb"||role==="bread"||role==="prot"){lo=lo*clamp(sz,role==="prot"?0.8:0.7,1);if(role!=="prot"&&!NOSCALEHI.includes(f))hi=hi*clamp(sz,1,1.35)}
+ if(role==="fat")hi=hi*clamp(sz/0.9,0.65,1);
  const cap=(HARDMAX[kind]||{})[f];if(cap)hi=Math.min(hi,cap);
  return [Math.round(lo),Math.round(hi)]}
 function fixedItems(rec,s){const items={};for(const k in rec.fx){let r=roundItem(k,rec.fx[k]*s);const st=F[k].pc?F[k].pc*(F[k].step||1):0;if(st&&r<st)r=st;if(r>0)items[k]=(items[k]||0)+r}return items}
@@ -530,32 +536,41 @@ function personDay(pi,i){
   const addVar=(food,role)=>{if(!food)return;const b=boundsFor(kind,food,sz,role);const x0=clamp((init[food]||0)-(fixed[food]||0),b[0],b[1]);vars.push({food,role,lo:b[0],hi:b[1],x:x0,x0,sc:Math.max(x0,(b[1]-b[0])/2,30)})};
   addVar(rec.prot,"prot");if(rec.carb&&rec.carb!==rec.prot)addVar(rec.carb,"carb");if(rec.fat)addVar(rec.fat,"fat");(rec.xv||[]).forEach(x=>vars.push({food:x.f,role:"extra",lo:x.lo,hi:x.hi,x:x.lo,x0:x.lo,sc:50}));
   /* pain complet en accompagnement, utilisé seulement si le plat ne suffit pas */
-  if(kind==="main"&&!["painc","tortilla"].includes(rec.carb)&&!rec.fx.painburger){vars.push({food:"painc",role:"bread",lo:0,hi:Math.round(BREAD[1]*clamp(sz,1,1.25)),x:0,x0:0,sc:60})}
-  meals.push({k,rec,kind,fixed,fm,vars,kt:t.kcal*sh[k]});
+  if(kind==="main"&&!["painc","tortilla"].includes(rec.carb)&&!rec.fx.painburger){vars.push({food:"painc",role:"bread",lo:0,hi:Math.round(BREAD[1]*clamp(sz,1,1.25)),x:0,x0:0,sc:22})}
+  meals.push({k,rec,kind,fixed,fm,vars,kt:t.kcal*sh[k],pt:t.P*sh[k]});
  });
- const W={p:5,g:1.2,l:1.5,k:3,m:0.6,r:0.004};
+ /* poids des objectifs : macros du jour, calories du jour, taille de chaque repas, protéines bien réparties entre les repas, petites retouches */
+ const W={p:5,g:1.2,l:1.5,k:3,m:0.6,mp:0.6,r:0.004};
  /* totaux tenus à jour au fil des ajustements, pour que le calcul reste rapide sur téléphone */
  const D={P:0,L:0,G:0};
- meals.forEach(m=>{m.K=4*m.fm.p+9*m.fm.l+4*m.fm.g;D.P+=m.fm.p;D.L+=m.fm.l;D.G+=m.fm.g;m.vars.forEach(v=>{const fd=F[v.food],q=v.x/100;v.ap=fd.p/100;v.al=fd.l/100;v.ag=fd.g/100;v.ak=4*v.ap+9*v.al+4*v.ag;D.P+=fd.p*q;D.L+=fd.l*q;D.G+=fd.g*q;m.K+=v.ak*v.x})});
+ meals.forEach(m=>{m.K=4*m.fm.p+9*m.fm.l+4*m.fm.g;m.P=m.fm.p;D.P+=m.fm.p;D.L+=m.fm.l;D.G+=m.fm.g;m.vars.forEach(v=>{const fd=F[v.food],q=v.x/100;v.ap=fd.p/100;v.al=fd.l/100;v.ag=fd.g/100;v.ak=4*v.ap+9*v.al+4*v.ag;D.P+=fd.p*q;D.L+=fd.l*q;D.G+=fd.g*q;m.K+=v.ak*v.x;m.P+=v.ap*v.x})});
  const iP=1/(T.p*T.p),iG=1/(T.g*T.g),iL=1/(T.l*T.l),iK=1/(T.k*T.k);
- for(let it=0;it<150;it++){
+ const solve=()=>{for(let it=0;it<150;it++){
   let moved=0;
-  for(const m of meals){const iM=1/(m.kt*m.kt);for(const v of m.vars){
-   const K=4*D.P+9*D.L+4*D.G,iS=1/(v.sc*v.sc);
-   const d1=2*W.p*(D.P-T.p)*iP*v.ap+2*W.g*(D.G-T.g)*iG*v.ag+2*W.l*(D.L-T.l)*iL*v.al+2*W.k*(K-T.k)*iK*v.ak+2*W.m*(m.K-m.kt)*iM*v.ak+2*W.r*(v.x-v.x0)*iS;
-   const d2=2*W.p*v.ap*v.ap*iP+2*W.g*v.ag*v.ag*iG+2*W.l*v.al*v.al*iL+2*W.k*v.ak*v.ak*iK+2*W.m*v.ak*v.ak*iM+2*W.r*iS;
+  for(const m of meals){const iM=1/(m.kt*m.kt),iMP=m.kind==="main"?1/(m.pt*m.pt):0;for(const v of m.vars){
+   if(v.locked)continue;
+   /* un peu plus de protéines que prévu n'est pas un problème : l'excès pèse beaucoup moins que le manque */
+   const K=4*D.P+9*D.L+4*D.G,iS=1/(v.sc*v.sc),wp=D.P>T.p?1.5:W.p,wmp=m.P>m.pt?0.2:W.mp;
+   const d1=2*wp*(D.P-T.p)*iP*v.ap+2*W.g*(D.G-T.g)*iG*v.ag+2*W.l*(D.L-T.l)*iL*v.al+2*W.k*(K-T.k)*iK*v.ak+2*W.m*(m.K-m.kt)*iM*v.ak+2*wmp*(m.P-m.pt)*iMP*v.ap+2*W.r*(v.x-v.x0)*iS;
+   const d2=2*wp*v.ap*v.ap*iP+2*W.g*v.ag*v.ag*iG+2*W.l*v.al*v.al*iL+2*W.k*v.ak*v.ak*iK+2*W.m*v.ak*v.ak*iM+2*wmp*v.ap*v.ap*iMP+2*W.r*iS;
    const nx=clamp(v.x-d1/d2,v.lo,v.hi),dx=nx-v.x;if(!dx)continue;
-   v.x=nx;D.P+=v.ap*dx;D.L+=v.al*dx;D.G+=v.ag*dx;m.K+=v.ak*dx;moved+=Math.abs(dx);
+   v.x=nx;D.P+=v.ap*dx;D.L+=v.al*dx;D.G+=v.ag*dx;m.K+=v.ak*dx;m.P+=v.ap*dx;moved+=Math.abs(dx);
   }}
   if(moved<0.05)break;
- }
+ }};
+ /* d'abord sans pain d'accompagnement ; le pain n'est ouvert que pour les plats dont le féculent est au maximum */
+ meals.forEach(m=>m.vars.forEach(v=>{if(v.role==="bread")v.locked=true}));
+ solve();
+ let reopen=false;
+ meals.forEach(m=>{const main=m.vars.find(v=>v.role==="carb"),br=m.vars.find(v=>v.role==="bread");if(br&&main&&main.x>=main.hi-0.5){br.locked=false;reopen=true}});
+ if(reopen)solve();
  meals.forEach(m=>{
   const items=Object.assign({},m.fixed);
   m.vars.forEach(v=>{
    let r=roundItem(v.food,v.x);const fd=F[v.food];
    if(fd.pc){const st=fd.pc*(fd.step||1);r=clamp(r,Math.ceil(v.lo/st-1e-9)*st,Math.floor(v.hi/st+1e-9)*st)}else r=clamp(r,v.lo,v.hi);
    if(v.role==="bread")r=v.x<12?0:Math.max(25,r);
-   if(v.role==="extra"&&v.lo===0)r=v.x<10?0:Math.max(20,r);
+   if(v.role==="extra"&&v.lo===0){const mn=Math.min(v.hi,v.food==="huile"?5:20);r=v.x<mn/2?0:clamp(Math.max(mn,r),0,v.hi)}
    if(r>0)items[v.food]=(items[v.food]||0)+r;
   });
   res[m.k]=items;
@@ -571,16 +586,18 @@ function personDay(pi,i){
   const need={p:(T.p-D2.p)/T.p*dir,g:(T.g-D2.g)/T.g*dir,l:(T.l-D2.l)/T.l*dir};
   let best=null;
   for(const c of cand){const {m,v}=c,it=res[m.k],fd=F[v.food],cur=(it[v.food]||0)-(m.fixed[v.food]||0);
-   const step=fd.pc?fd.pc*(fd.step||1):(v.role==="bread"&&cur===0?25:v.role==="extra"&&cur===0?20:10);
+   const step=fd.pc?fd.pc*(fd.step||1):(v.role==="bread"&&cur===0?25:v.role==="extra"&&cur===0?Math.min(v.hi,v.food==="huile"?5:20):v.food==="huile"?5:10);
    const nv=cur+dir*step;
    if(nv<v.lo-1e-9||nv>v.hi+1e-9)continue;
-   if((v.role==="bread"&&nv>0&&nv<25)||(v.role==="extra"&&v.lo===0&&nv>0&&nv<20))continue;
+   if((v.role==="bread"&&nv>0&&nv<25)||(v.role==="extra"&&v.lo===0&&nv>0&&nv<Math.min(v.hi,v.food==="huile"?5:20)))continue;
    const dk=step*(4*fd.p+9*fd.l+4*fd.g)/100;if(dk>Math.abs(gap)*1.6||dk<=0)continue;
    /* on ne pousse jamais un macro au-delà de 115 % (ou en dessous de 85 %) de sa cible pour rattraper les calories */
    const q=dir*step/100,np=D2.p+fd.p*q,nl=D2.l+fd.l*q,ng=D2.g+fd.g*q;
    if(dir>0&&((fd.p>0.5&&np>T.p*1.15)||(fd.l>0.5&&nl>T.l*1.15)||(fd.g>0.5&&ng>T.g*1.15)))continue;
    if(dir<0&&((fd.p>0.5&&np<T.p*0.85)||(fd.l>0.5&&nl<T.l*0.85)||(fd.g>0.5&&ng<T.g*0.85)))continue;
-   const score=(fd.p*4*need.p+fd.g*4*need.g+fd.l*9*need.l)/(4*fd.p+4*fd.g+9*fd.l);
+   let score=(fd.p*4*need.p+fd.g*4*need.g+fd.l*9*need.l)/(4*fd.p+4*fd.g+9*fd.l);
+   /* le pain ne vient en renfort que si le féculent du plat est déjà au maximum */
+   if(v.role==="bread"&&dir>0){const main=m.vars.find(x=>x.role==="carb");if(main&&((res[m.k][main.food]||0)-(m.fixed[main.food]||0))<main.hi-1e-9)continue;score*=0.5}
    if(!best||score>best.score)best={c,nv,score}}
   if(!best)break;
   const {m,v}=best.c,it=res[m.k];it[v.food]=(m.fixed[v.food]||0)+best.nv;if(!(it[v.food]>0))delete it[v.food];
@@ -783,10 +800,10 @@ function ring(val,target){
 const bar=(cls,lab,v,t)=>`<div class="bar ${cls}"><div class="lbl"><b>${lab}</b><span>${Math.round(v)} / ${t} g</span></div><div class="tr"><i style="width:${Math.min(100,Math.round(v/t*100))}%"></i></div></div>`;
 function summaryCard(i){
  if(S.me==="all"){
-  return `<div class="card stack">${S.people.map((p,pi)=>{const d=pd(pi,i);const m=macrosOf(sumItems([d.bkf,d.lunch,d.snack,d.dinner]));return `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div><b>${esc(p.name)}</b><div class="chips" style="margin-top:4px"><span class="chip${d.tr?" acc":""}">${d.tr?"Jour de salle":"Repos"}</span>${d.out?`<span class="chip">Midi en entreprise</span>`:""}</div></div><div class="num" style="text-align:right"><b>${fr(m.kcal)}</b> <span class="muted small">/ ${fr(d.target.kcal)} kcal</span></div></div>`}).join(`<div style="border-top:1px solid var(--line)"></div>`)}<p class="muted small" style="margin:0">Les fiches des repas donnent les quantités à cuisiner pour vous deux.</p></div>`;
+  return `<div class="card stack">${S.people.map((p,pi)=>{const d=pd(pi,i);const m=macrosOf(sumItems([d.bkf,d.lunch,d.snack,d.dinner]));return `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div><b>${esc(p.name)}</b><div class="chips" style="margin-top:4px">${p.train.some(Boolean)?`<span class="chip${d.tr?" acc":""}">${d.tr?"Jour de salle":"Repos"}</span>`:""}${d.out?`<span class="chip">Midi en entreprise</span>`:""}</div></div><div class="num" style="text-align:right"><b>${fr(m.kcal)}</b> <span class="muted small">/ ${fr(d.target.kcal)} kcal</span></div></div>`}).join(`<div style="border-top:1px solid var(--line)"></div>`)}<p class="muted small" style="margin:0">Les fiches des repas donnent les quantités à cuisiner pour vous deux.</p></div>`;
  }
  const d=pd(S.me,i),t=d.target,m=macrosOf(sumItems([d.bkf,d.lunch,d.snack,d.dinner]));
- return `<div class="card stack"><div class="sum">${ring(m.kcal,t.kcal)}<div class="bars">${bar("p","Protéines",m.p,t.P)}${bar("g","Glucides",m.g,t.G)}${bar("l","Lipides",m.l,t.L)}</div></div><div class="chips"><span class="chip${d.tr?" acc":""}">${d.tr?"Jour de salle":"Jour de repos"}</span>${d.out?`<span class="chip">Midi en entreprise, non compté ici</span>`:""}${S.people[S.me].adj?`<span class="chip">Calories ajustées de ${S.people[S.me].adj>0?"+":""}${S.people[S.me].adj}</span>`:""}</div>${gapNote(S.people[S.me],m.kcal,t.kcal)}</div>`;
+ return `<div class="card stack"><div class="sum">${ring(m.kcal,t.kcal)}<div class="bars">${bar("p","Protéines",m.p,t.P)}${bar("g","Glucides",m.g,t.G)}${bar("l","Lipides",m.l,t.L)}</div></div><div class="chips">${S.people[S.me].train.some(Boolean)?`<span class="chip${d.tr?" acc":""}">${d.tr?"Jour de salle":"Jour de repos"}</span>`:""}${d.out?`<span class="chip">Midi en entreprise, non compté ici</span>`:""}${S.people[S.me].adj?`<span class="chip">Calories ajustées de ${S.people[S.me].adj>0?"+":""}${S.people[S.me].adj}</span>`:""}</div>${gapNote(S.people[S.me],m.kcal,t.kcal)}</div>`;
 }
 /* si les plats du jour ne suffisent pas à atteindre l'objectif, on le dit et on propose quoi ajouter */
 function gapNote(p,k,t){const gap=t-k;
@@ -990,7 +1007,7 @@ function viewMoi(){
 function sheetProfile(pi){
  const p=S.people[pi],t=targets(p);
  return {kicker:"Profil",title:p.name,body:`
- <div class="card" style="padding:12px 14px"><div class="macro"><span><b>${fr(t.kcal)}</b> kcal</span><span class="p"><b>${t.P} g</b> prot.</span><span class="g"><b>${t.G} g</b> gluc.</span><span class="l"><b>${t.L} g</b> lip.</span></div><div class="muted tiny" style="margin-top:4px">Les jours de salle. Repos : ${fr(dayTarget(p,false).kcal)} kcal.</div></div>
+ <div class="card" style="padding:12px 14px"><div class="macro"><span><b>${fr(t.kcal)}</b> kcal</span><span class="p"><b>${t.P} g</b> prot.</span><span class="g"><b>${t.G} g</b> gluc.</span><span class="l"><b>${t.L} g</b> lip.</span></div><div class="muted tiny" style="margin-top:4px">${(()=>{const n=p.train.filter(Boolean).length;return n>0&&n<7?`Moyenne de la semaine. Jours de salle : ${fr(dayTarget(p,true).kcal)} kcal, jours de repos : ${fr(dayTarget(p,false).kcal)} kcal.`:"Chaque jour de la semaine."})()}</div></div>
  <label class="field">Prénom<input data-p="${pi}" data-f="name" value="${esc(p.name)}"></label>
  <div class="grid2"><label class="field">Sexe<select data-p="${pi}" data-f="sex"><option value="H"${p.sex==="H"?" selected":""}>Homme</option><option value="F"${p.sex==="F"?" selected":""}>Femme</option></select></label><label class="field">Âge<input data-p="${pi}" data-f="age" type="number" inputmode="numeric" value="${p.age}"></label></div>
  <div class="grid2"><label class="field">Taille (cm)<input data-p="${pi}" data-f="h" type="number" inputmode="numeric" value="${p.h}"></label><label class="field">Poids (kg)<input data-p="${pi}" data-f="w" type="number" inputmode="decimal" step="0.1" value="${p.w}"></label></div>
@@ -1129,7 +1146,7 @@ document.addEventListener("change",e=>{
 });
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&S.sheet)closeSheet();if(e.key==="Enter"&&e.target.id==="wkg"){const b=document.querySelector('[data-a="addw"]');if(b)b.click()}});
 
-const APPV="2026-11-18d";
+const APPV="2026-11-18e";
 /* ---------- Démarrage ---------- */
 if(S.tab==="menus")S.tab="jour";else if(S.tab==="profils")S.tab="moi";
 function renamePrincess(){let ch=false;const p=S.people[1];if(p&&(p.name==="Ma conjointe"||p.name==="Personne 2")){p.name="Princesse";ch=true}
@@ -1142,6 +1159,10 @@ function renamePrincess(){let ch=false;const p=S.people[1];if(p&&(p.name==="Ma c
   const conv=o=>{if(!o)return o;const n={};for(const k in o){const m=/^w?(\d{1,2})$/.exec(k);n[m?wkKey(+m[1]):k]=o[k]}return n};
   S.done=conv(S.done);S.ledger=conv(S.ledger);S.checked=conv(S.checked);
   S.v=4;ch=true}
+ /* version 5 : Princesse mesure 1m60 et ne fait pas de sport */
+ if((S.v||0)<5){
+  if(p){if(p.h===165)p.h=160;if(p.act===1)p.act=0;if(JSON.stringify(p.train)===JSON.stringify([false,true,false,false,true,false,false]))p.train=[false,false,false,false,false,false,false]}
+  S.v=5;ch=true}
  S.people.forEach(q=>{if(q.bkfFixed===undefined)q.bkfFixed=""});
  return ch}
 renamePrincess();

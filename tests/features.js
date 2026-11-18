@@ -23,7 +23,9 @@ const V3={tab:"jour",week:0,seed:20261116,start:"2026-11-16",days:30,excl:["fdm"
 (async()=>{
  // 1. migration depuis la version 3
  {const {w,errs}=await boot(V3,"2026-11-18T09:00:00");const S=w.eval("S");
-  check("version 4",S.v===4,S.v);
+  check("version 5",S.v===5,S.v);
+  check("Princesse 1m60",S.people[1].h===160,S.people[1].h);
+  check("Princesse sans sport",S.people[1].act===0&&S.people[1].train.every(x=>!x),[S.people[1].act,S.people[1].train]);
   check("4 semaines",S.days===28,S.days);
   check("Princesse 66 kg",S.people[1].w===66,S.people[1].w);
   check("Princesse en perte",S.people[1].goal==="perte",S.people[1].goal);
@@ -35,13 +37,15 @@ const V3={tab:"jour",week:0,seed:20261116,start:"2026-11-16",days:30,excl:["fdm"
   check("plat retiré renommé reconnu",w.eval("PLAN.every(d=>d.lunch.n!=='Dahl de lentilles corail au poulet'&&d.dinner.n!=='Dahl de lentilles corail au poulet')"));
   check("plat changé renommé reconnu",w.eval("PLAN.find(d=>iso(d.date)==='2026-11-20').dinner.n")==="Omelette au jambon, pommes de terre et épinards",w.eval("PLAN.find(d=>iso(d.date)==='2026-11-20').dinner.n"));
   const t=w.eval("targets(S.people[1])");
-  check("cible Princesse plausible",t.kcal>1400&&t.kcal<1900&&t.P>=95&&t.P<=115,t);
+  check("cible Princesse plausible",t.kcal>1350&&t.kcal<1600&&t.P>=80&&t.P<=95,t);
+  check("Princesse : même cible tous les jours",w.eval("dayTarget(S.people[1],false).kcal===targets(S.people[1]).kcal"));
+  check("Anthony : moyenne de la semaine = cible",Math.abs(w.eval("[0,1,2,3,4,5,6].map(i=>dayTarget(S.people[0],S.people[0].train[i]).kcal).reduce((a,b)=>a+b)/7")-2829)<3);
   const ta=w.eval("targets(S.people[0])");
   check("cible Anthony inchangée",ta.kcal===2829&&ta.P===170,ta);
   check("aucune erreur JS",errs.length===0,errs);
  }
  // 2. semaines passées, semaine ouverte, validation
- {const st=JSON.parse(JSON.stringify(V3));st.v=4;st.days=28;st.start="2026-11-02";st.done={};st.ledger={};st.checked={};
+ {const st=JSON.parse(JSON.stringify(V3));st.v=5;st.days=28;st.start="2026-11-02";st.done={};st.ledger={};st.checked={};
   const {w,d,errs}=await boot(st,"2026-11-18T09:00:00");
   check("semaine en cours ouverte",w.eval("firstOpenWeek()")===2,w.eval("firstOpenWeek()"));
   check("semaine passée",w.eval("isPast(0)&&isPast(1)&&!isPast(2)"));
@@ -59,7 +63,7 @@ const V3={tab:"jour",week:0,seed:20261116,start:"2026-11-16",days:30,excl:["fdm"
   check("aucune erreur JS",errs.length===0,errs);
  }
  // 3. mois suivant
- {const st=JSON.parse(JSON.stringify(V3));st.v=4;st.days=28;st.start="2026-10-26";st.done={w20261109:true};st.ledger={};st.checked={};
+ {const st=JSON.parse(JSON.stringify(V3));st.v=5;st.days=28;st.start="2026-10-26";st.done={w20261109:true};st.ledger={};st.checked={};
   const {w,d,errs}=await boot(st,"2026-11-18T09:00:00");
   check("bandeau fin de menus",d.body.textContent.includes("Les menus se terminent"),d.querySelector('.app').textContent.slice(0,200));
   const seed=w.eval("S.seed");
@@ -70,7 +74,7 @@ const V3={tab:"jour",week:0,seed:20261116,start:"2026-11-16",days:30,excl:["fdm"
   check("stock gardé",w.eval("S.stock.riz")===600);
   check("aucune erreur JS",errs.length===0,errs);
  }
- {const st=JSON.parse(JSON.stringify(V3));st.v=4;st.days=28;st.start="2026-10-12";st.done={};st.ledger={};st.checked={};
+ {const st=JSON.parse(JSON.stringify(V3));st.v=5;st.days=28;st.start="2026-10-12";st.done={};st.ledger={};st.checked={};
   const {w,d,errs}=await boot(st,"2026-11-18T09:00:00");
   check("bandeau menus terminés",d.body.textContent.includes("se sont terminés"));
   click(w,'[data-a="nextplan"]');
@@ -79,7 +83,7 @@ const V3={tab:"jour",week:0,seed:20261116,start:"2026-11-16",days:30,excl:["fdm"
   check("aucune erreur JS",errs.length===0,errs);
  }
  // 4. objectif de poids et suivi
- {const st=JSON.parse(JSON.stringify(V3));st.v=4;st.days=28;st.owner=1;st.people[1].w=66;st.people[1].goal="perte";st.people[1].goalMin=50;st.people[1].goalMax=60;st.done={};st.ledger={};st.checked={};
+ {const st=JSON.parse(JSON.stringify(V3));st.v=5;st.days=28;st.owner=1;st.people[1].w=66;st.people[1].goal="perte";st.people[1].goalMin=50;st.people[1].goalMax=60;st.done={};st.ledger={};st.checked={};
   st.people[1].log=[];for(let k=0;k<15;k++){const dd=new Date(2026,10,3+k,12);st.people[1].log.push({d:dd.toISOString().slice(0,10),kg:+(66.6-k*0.07).toFixed(1)})}
   const {w,d,errs}=await boot(st,"2026-11-18T09:00:00");
   click(w,'[data-a="tab"][data-v="moi"]');
@@ -96,7 +100,7 @@ const V3={tab:"jour",week:0,seed:20261116,start:"2026-11-16",days:30,excl:["fdm"
   check("aucune erreur JS",errs.length===0,errs);
  }
  // 5. tous les écrans et fiches, pour chaque profil et chaque jour de la première semaine
- {const st=JSON.parse(JSON.stringify(V3));st.v=4;st.days=28;st.done={};st.ledger={};st.checked={};st.leftovers=true;
+ {const st=JSON.parse(JSON.stringify(V3));st.v=5;st.days=28;st.done={};st.ledger={};st.checked={};st.leftovers=true;
   const {w,d,errs}=await boot(st,"2026-11-18T09:00:00");
   let bad=0;
   for(const me of [0,1,"all"])for(let i=0;i<7;i++){w.eval(`S.me=${JSON.stringify(me)};S.day=${i};S.tab="jour";render()`);
