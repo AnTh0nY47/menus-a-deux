@@ -8,7 +8,7 @@ setTimeout(()=>{const w=dom.window;w.eval(`
 let seed=12345;const R=()=>{seed=(seed*1103515245+12345)%2147483648;return seed/2147483648};
 const pick=a=>a[Math.floor(R()*a.length)],ri=(a,b)=>Math.round(a+R()*(b-a));
 const MAINR={riz:[35,210],pates:[35,210],semoule:[35,210],quinoa:[35,185],pdt:[110,400],patdouce:[110,400],tortilla:[60,240],painc:[25,175],poulet:[75,250],dinde:[75,250],boeuf5:[75,250],rumsteck:[75,250],porc:[75,250],jambon:[45,200],thon:[50,205],crevettes:[75,250],oeuf:[55,275],huile:[0,20],beurre:[0,20],creme:[0,80],emmental:[0,50],pesto:[0,35],avocat:[0,150],lentilles:[30,195]};
-const BKFR={avoine:[25,145],painc:[30,170],whey:[10,40],fblanc:[80,350],oeuf:[55,220],beurre:[0,15],cacahuete:[0,30],amandes:[0,35],lait:[60,300],banane:[60,180],pomme:[75,225]};
+const BKFR={avoine:[25,145],painc:[30,170],whey:[10,40],fblanc:[80,350],oeuf:[55,220],beurre:[0,15],cacahuete:[0,30],amandes:[0,35],lait:[40,300],banane:[60,180],pomme:[75,225]};
 const SNKR={fblanc:[80,300],whey:[10,40],banane:[60,300],avoine:[14,82],pomme:[75,375],choco:[0,25],jambon:[30,120],painc:[25,120],beurre:[0,10],amandes:[0,30],frouges:[40,250],lait:[100,300]};
 const out={cases:0,days:0,bad:{},ex:{}};const bad=(k,e)=>{out.bad[k]=(out.bad[k]||0)+1;if(!out.ex[k])out.ex[k]=e};
 const ALLEX=["poisson","fdm","porc","boeuf","volaille","oeuf"];
