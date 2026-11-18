@@ -10,6 +10,10 @@ Chaque jour propose un petit déjeuner, un midi et un dîner. Les portions sont 
 
 Les quantités de toute la journée sont calculées ensemble pour viser les protéines, les glucides, les lipides et les calories, avec pour chaque aliment une fourchette réaliste selon le repas. Si un plat ne suffit pas, du pain complet vient en accompagnement. Les jours où l'objectif ne peut pas être atteint, l'appli le dit et propose quoi ajouter.
 
+Le midi et le soir gardent chacun leur part de protéines, de lipides et de glucides. Sans ça, un midi riche en matières grasses donnait une montagne de riz le soir.
+
+Si les portions paraissent trop copieuses ou trop légères, le réglage Quantités du profil enlève ou ajoute des calories chaque jour, sans toucher aux protéines. Anthony est à 300 kcal de moins par jour.
+
 Un plat qui ne plaît pas se change d'un appui, ou se retire pour de bon avec Je n'aime pas. Les plats retirés se remettent depuis Réglages.
 
 Le petit déjeuner peut être fixe pour une personne. Princesse a toujours flocons d'avoine, muesli chocolat au lait Chabrior et lait.

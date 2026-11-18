@@ -12,14 +12,14 @@ const BKFR={muesli:[15,95],avoine:[20,145],painc:[30,170],whey:[10,40],fblanc:[8
 const SNKR={fblanc:[80,300],whey:[10,40],banane:[60,300],avoine:[14,82],pomme:[75,375],choco:[0,25],jambon:[30,120],painc:[25,120],beurre:[0,10],amandes:[0,30],frouges:[40,250],lait:[100,300]};
 const HS0=[["H188",{sex:"H",h:188,w:85,age:22,act:2,goal:"recompo"}],["H178prise",{sex:"H",h:178,w:75,age:30,act:3,goal:"prise"}],["H175perte",{sex:"H",h:175,w:95,age:35,act:1,goal:"perte"}],["H185maigre",{sex:"H",h:185,w:70,age:20,act:3,goal:"prise"}]];
 const FS0=[["F165",{sex:"F",h:165,w:60,age:22,act:1,goal:"recompo"}],["F160perte",{sex:"F",h:160,w:52,age:22,act:1,goal:"perte"}],["F170",{sex:"F",h:170,w:68,age:25,act:2,goal:"maintien"}],["F158petite",{sex:"F",h:158,w:48,age:20,act:0,goal:"recompo"}],["F172perte",{sex:"F",h:172,w:75,age:28,act:2,goal:"perte"}]];
-const HS=MODE==='foyer'?[["Anthony",{sex:"H",h:188,w:85,age:22,act:2,goal:"recompo"}],["Anthony-perte",{sex:"H",h:188,w:85,age:22,act:2,goal:"perte"}],["Anthony-27ans",{sex:"H",h:188,w:85,age:27,act:2,goal:"recompo"}]]:HS0;
+const HS=MODE==='foyer'?[["Anthony",{sex:"H",h:188,w:85,age:22,act:2,goal:"recompo",kadj:-300}],["Anthony-sans-ajustement",{sex:"H",h:188,w:85,age:22,act:2,goal:"recompo"}],["Anthony-perte",{sex:"H",h:188,w:85,age:22,act:2,goal:"perte"}],["Anthony-27ans",{sex:"H",h:188,w:85,age:27,act:2,goal:"recompo"}]]:HS0;
 const FS=MODE==='foyer'?[["Princesse-22ans",{sex:"F",h:160,w:66,age:22,act:0,goal:"perte",goalMin:50,goalMax:60,train:[false,false,false,false,false,false,false]}],["Princesse-26ans",{sex:"F",h:160,w:66,age:26,act:0,goal:"perte",goalMin:50,goalMax:60,train:[false,false,false,false,false,false,false]}],["Princesse-30ans",{sex:"F",h:160,w:66,age:30,act:0,goal:"perte",goalMin:50,goalMax:60,train:[false,false,false,false,false,false,false]}],["Princesse-60kg-maintien",{sex:"F",h:160,w:60,age:22,act:0,goal:"maintien",goalMin:50,goalMax:60,train:[false,false,false,false,false,false,false]}],["Princesse-si-sport",{sex:"F",h:160,w:66,age:22,act:1,goal:"perte",goalMin:50,goalMax:60,train:[false,true,false,false,true,false,false]}]]:FS0;
 const issues={};let checks=0;
 function flag(key,ex){if(!issues[key])issues[key]={n:0,ex:[]};issues[key].n++;if(issues[key].ex.length<3)issues[key].ex.push(ex)}
 function run(seeds,los,snacks,lunches){
  for(const [hn,H] of HS)for(const [fn,Fm] of FS)for(const seed of seeds)for(const lo of los)for(const sn of snacks)for(const lm of lunches){
-  S.people[0]=Object.assign({},S.people[0],H,{name:hn,snack:sn,lunch:"home",sweet:false,bkfFixed:"",adj:0,train:[true,true,false,true,true,false,false]});
-  S.people[1]=Object.assign({},S.people[1],Fm,{name:fn,snack:sn,lunch:lm,sweet:true,train:Fm.train||[false,true,false,false,true,false,false],bkfFixed:MODE==='foyer'?"Flocons d'avoine, muesli chocolat et lait":"",adj:0});
+  S.people[0]=Object.assign({},S.people[0],{kadj:0},H,{name:hn,snack:sn,lunch:"home",sweet:false,bkfFixed:"",adj:0,train:[true,true,false,true,true,false,false]});
+  S.people[1]=Object.assign({},S.people[1],{kadj:0},Fm,{name:fn,snack:sn,lunch:lm,sweet:true,train:Fm.train||[false,true,false,false,true,false,false],bkfFixed:MODE==='foyer'?"Flocons d'avoine, muesli chocolat et lait":"",adj:0});
   S.seed=seed;S.leftovers=lo;S.start="2026-11-16";S.days=28;S.ov={};S.banned=[];S.excl=["fdm"];buildPlan();DCACHE.clear();
   for(let i=0;i<S.days;i++)for(let pi=0;pi<2;pi++){
    const p=S.people[pi],d=pd(pi,i),t=dayTarget(p,d.tr),sh=shares(p.snack);

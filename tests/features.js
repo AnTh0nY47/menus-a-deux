@@ -23,7 +23,9 @@ const V3={tab:"jour",week:0,seed:20261116,start:"2026-11-16",days:30,excl:["fdm"
 (async()=>{
  // 1. migration depuis la version 3
  {const {w,errs}=await boot(V3,"2026-11-18T09:00:00");const S=w.eval("S");
-  check("version 5",S.v===5,S.v);
+  check("version 6",S.v===6,S.v);
+  check("Anthony : 300 kcal de moins par jour",S.people[0].kadj===-300,S.people[0].kadj);
+  check("Princesse : quantités comme calculé",S.people[1].kadj===0,S.people[1].kadj);
   check("Princesse 1m60",S.people[1].h===160,S.people[1].h);
   check("Princesse sans sport",S.people[1].act===0&&S.people[1].train.every(x=>!x),[S.people[1].act,S.people[1].train]);
   check("4 semaines",S.days===28,S.days);
@@ -39,9 +41,26 @@ const V3={tab:"jour",week:0,seed:20261116,start:"2026-11-16",days:30,excl:["fdm"
   const t=w.eval("targets(S.people[1])");
   check("cible Princesse plausible",t.kcal>1350&&t.kcal<1600&&t.P>=80&&t.P<=95,t);
   check("Princesse : même cible tous les jours",w.eval("dayTarget(S.people[1],false).kcal===targets(S.people[1]).kcal"));
-  check("Anthony : moyenne de la semaine = cible",Math.abs(w.eval("[0,1,2,3,4,5,6].map(i=>dayTarget(S.people[0],S.people[0].train[i]).kcal).reduce((a,b)=>a+b)/7")-2829)<3);
+  check("Anthony : moyenne de la semaine = cible",Math.abs(w.eval("[0,1,2,3,4,5,6].map(i=>dayTarget(S.people[0],S.people[0].train[i]).kcal).reduce((a,b)=>a+b)/7")-2529)<3);
   const ta=w.eval("targets(S.people[0])");
-  check("cible Anthony inchangée",ta.kcal===2829&&ta.P===170,ta);
+  check("cible Anthony allégée, protéines gardées",ta.kcal===2529&&ta.P===170&&ta.L===77,ta);
+  check("Anthony : riz du soir raisonnable",w.eval("Object.values(PLAN.map((d,i)=>pd(0,i).dinner||{})).every(m=>!(m.riz>160)&&!(m.pates>160))"));
+  check("aucune erreur JS",errs.length===0,errs);
+ }
+ // 1 bis. réglage « Quantités » du profil : moins copieux, plus copieux, plancher
+ {const st=JSON.parse(JSON.stringify(V3));st.v=6;st.days=28;st.people[0].kadj=-300;st.people[1].kadj=0;
+  const {w,d,errs}=await boot(st,"2026-11-18T09:00:00");
+  check("migration déjà faite : réglage gardé",w.eval("S.people[0].kadj")===-300);
+  w.eval("openSheet({t:'prof',pi:0})");
+  const sel=d.querySelector('select[data-f="kadj"]');
+  check("champ Quantités présent",!!sel&&sel.value==="-300",sel&&sel.value);
+  if(sel){sel.value="0";sel.dispatchEvent(new w.Event('change',{bubbles:true}))}
+  check("Quantités comme calculé : 2 829 kcal",w.eval("targets(S.people[0]).kcal")===2829,w.eval("targets(S.people[0]).kcal"));
+  check("valeur enregistrée en nombre",w.eval("S.people[0].kadj")===0,w.eval("S.people[0].kadj"));
+  w.eval("S.people[1].kadj=-600;S.people[1].adj=-600");
+  const tp=w.eval("targets(S.people[1])");
+  const bmr=w.eval("(q=>10*q.w+6.25*q.h-5*q.age-161)(S.people[1])");
+  check("jamais sous le métabolisme de base",tp.kcal>=1200&&tp.kcal>=Math.round(bmr)-2,[tp,bmr]);
   check("aucune erreur JS",errs.length===0,errs);
  }
  // 2. semaines passées, semaine ouverte, validation
