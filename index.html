@@ -265,6 +265,7 @@ const F={
  avocat:{n:"Avocat",p:2,l:15,g:2,r:"Fruits et légumes",max:160},
  pesto:{n:"Pesto",p:5,l:45,g:6,r:"Épicerie",max:40},
  choco:{n:"Chocolat noir 70 %",p:8,l:42,g:33,r:"Épicerie",max:30},
+ muesli:{n:"Muesli croustillant chocolat au lait Chabrior",p:8.5,l:16,g:66,r:"Épicerie"},
  miel:{n:"Miel",p:0.3,l:0,g:81,r:"Épicerie"},
  banane:{n:"Banane",p:1.2,l:0.3,g:21,r:"Fruits et légumes",pc:120,unit:["banane","bananes"],step:0.5,max:240},
  pomme:{n:"Pomme",p:0.3,l:0.2,g:12,r:"Fruits et légumes",pc:150,unit:["pomme","pommes"],step:0.5,max:300},
@@ -289,7 +290,7 @@ const MAINS=[
  {n:"Poulet citronné, riz et courgettes",how:"Poulet mariné au citron et à l'ail, courgettes sautées à l'huile.",t:[10,20],st:["Coupe le poulet en morceaux, mélange avec le jus d'un demi citron, ail et herbes.","Lance le riz, 11 à 12 min.","Fais sauter les courgettes en rondelles dans la moitié de l'huile 8 min.","Fais dorer le poulet dans le reste de l'huile 8 à 10 min et sers avec le riz."],prot:"poulet",carb:"riz",fat:"huile",fx:{courgette:200}},
  {n:"Curry de dinde, riz et courgettes",how:"Dinde en dés, courgettes, tomates et curry doux, 15 min à feu doux.",t:[10,25],st:["Lance le riz.","Coupe la dinde en dés et fais-la dorer dans l'huile 5 min.","Ajoute les courgettes en dés, les tomates et une cuillère de curry doux.","Couvre et laisse mijoter 15 min à feu doux avec un petit verre d'eau, sers sur le riz."],prot:"dinde",carb:"riz",fat:"huile",fx:{courgette:150,tomates:80}},
  {n:"Chili con carne sans piment",how:"Bœuf, coulis et haricots rouges, cumin et paprika doux, 20 min.",t:[10,25],st:["Lance le riz.","Fais revenir le bœuf dans l'huile 5 min.","Ajoute le coulis, les haricots rouges rincés, le cumin et le paprika doux.","Laisse mijoter 20 min à couvert, rectifie l'assaisonnement et sers avec le riz."],prot:"boeuf5",carb:"riz",fat:"huile",fx:{hrouges:100,coulis:150}},
- {n:"Omelette aux pommes de terre et épinards",how:"Pommes de terre en rondelles dorées, épinards, œufs battus par-dessus.",t:[10,20],st:["Coupe les pommes de terre en fines rondelles et fais-les dorer à l'huile 12 min à couvert.","Ajoute les épinards et laisse-les fondre 3 min.","Bats les œufs avec sel et poivre, verse sur la poêle.","Couvre et cuis 5 min à feu doux, sers avec la salade."],prot:"oeuf",carb:"pdt",fat:"huile",fx:{epinards:150,salade:60}},
+ {n:"Omelette au jambon, pommes de terre et épinards",how:"Pommes de terre en rondelles dorées, épinards et dés de jambon, œufs battus par-dessus.",xv:[{f:"jambon",lo:0,hi:100}],t:[10,20],st:["Coupe les pommes de terre en fines rondelles et fais-les dorer à l'huile 12 min à couvert.","Ajoute les épinards et les dés de jambon, laisse fondre 3 min.","Bats les œufs avec sel et poivre, verse sur la poêle.","Couvre et cuis 5 min à feu doux, sers avec la salade."],prot:"oeuf",carb:"pdt",fat:"huile",fx:{epinards:150,salade:60}},
  {n:"Wraps de poulet et avocat",how:"Poulet grillé en lanières, salade, tomates, carottes râpées, avocat écrasé.",t:[15,10],st:["Coupe le poulet en lanières et fais-le griller à sec 8 min, sel, poivre, paprika doux.","Râpe les carottes, coupe les tomates, lave la salade.","Écrase l'avocat avec un peu de citron et de sel.","Réchauffe les tortillas 20 s à la poêle, garnis et roule."],prot:"poulet",carb:"tortilla",fat:"avocat",fx:{salade:50,tomates:100,carottes:60}},
  {n:"Pâtes au thon et à la tomate",how:"Coulis réchauffé avec courgette en dés, thon émietté à la fin.",t:[5,15],st:["Lance les pâtes.","Fais revenir la courgette en dés dans l'huile 5 min.","Ajoute le coulis, ail et basilic, laisse mijoter 5 min.","Ajoute le thon émietté au dernier moment et mélange avec les pâtes égouttées."],prot:"thon",carb:"pates",fat:"huile",fx:{coulis:120,courgette:100}},
  {n:"Crevettes sautées, riz et légumes",how:"Crevettes et légumes au wok, sauce soja en fin de cuisson.",t:[10,15],st:["Lance le riz.","Fais sauter brocoli et carottes en lamelles dans l'huile 6 min à feu vif.","Ajoute les crevettes 3 min.","Verse la sauce soja, mélange et sers sur le riz."],prot:"crevettes",carb:"riz",fat:"huile",fx:{brocoli:100,carottes:80,soja:15}},
@@ -312,11 +313,12 @@ const MAINS=[
  {n:"Pâtes au thon, courgettes et crème",how:"Courgettes poêlées 8 min, un peu de crème, thon ajouté à la fin.",t:[10,15],st:["Lance les pâtes.","Poêle les courgettes en demi rondelles 8 min à feu moyen.","Ajoute la crème, sel, poivre, un peu de zeste de citron.","Ajoute le thon émietté hors du feu et mélange avec les pâtes."],prot:"thon",carb:"pates",fat:"creme",fx:{courgette:180}},
  {n:"Salade niçoise",how:"Pommes de terre et haricots verts cuits, thon, œuf dur, tomates, vinaigrette.",t:[15,20],st:["Cuis les pommes de terre 15 à 20 min et les haricots verts 8 min.","Cuis l'œuf 10 min dans l'eau bouillante, refroidis et écale.","Coupe tomates et pommes de terre, prépare la vinaigrette avec l'huile.","Assemble avec la salade, le thon et l'œuf en quartiers."],prot:"thon",carb:"pdt",fat:"huile",fx:{hverts:120,oeuf:55,tomates:120,salade:50}},
  {n:"Bowl mexicain à la dinde",how:"Dinde aux épices douces, riz, haricots rouges, tomates et avocat.",t:[15,20],st:["Lance le riz.","Fais dorer la dinde en dés avec paprika doux et cumin 6 à 8 min.","Réchauffe les haricots rouges rincés 3 min.","Dispose riz, dinde, haricots, tomates en dés et avocat dans un bol, filet de citron."],prot:"dinde",carb:"riz",fat:"avocat",fx:{hrouges:80,tomates:100}},
- {n:"Dahl de lentilles corail et riz",how:"Lentilles, tomates, ail et curry doux 20 min, épinards à la fin.",t:[10,25],st:["Lance le riz.","Fais revenir ail et curry doux dans l'huile 1 min.","Ajoute les lentilles rincées, les tomates et deux fois leur volume d'eau, cuis 18 à 20 min.","Ajoute les épinards 3 min avant la fin, sale et sers avec le riz."],prot:"lentilles",carb:"riz",fat:"huile",fx:{epinards:100,tomates:100}},
+ {n:"Dahl de lentilles corail au poulet",how:"Poulet et lentilles mijotés avec tomates, ail et curry doux, épinards à la fin, servi avec du riz.",t:[10,25],st:["Lance le riz.","Fais dorer le poulet en dés dans l'huile avec l'ail et le curry doux, 5 min.","Ajoute les lentilles rincées, les tomates et deux fois le volume des lentilles en eau, cuis 18 à 20 min.","Ajoute les épinards 3 min avant la fin, sale et sers avec le riz."],prot:"poulet",carb:"riz",fat:"huile",fx:{lentilles:50,epinards:100,tomates:100}},
  {n:"Escalope de dinde, semoule et courgettes à la provençale",how:"Escalope poêlée, courgettes et tomates mijotées à l'huile d'olive.",t:[10,20],st:["Fais revenir courgettes et tomates en dés dans l'huile avec ail et herbes de Provence, 15 min.","Verse de l'eau bouillante salée sur la semoule, couvre 5 min puis égraine.","Poêle les escalopes 3 à 4 min par face.","Sers la dinde sur la semoule avec les légumes."],prot:"dinde",carb:"semoule",fat:"huile",fx:{courgette:150,tomates:80}},
  {n:"Porc sauté aux légumes et riz",how:"Filet mignon en lamelles au wok avec carottes et courgette, sauce soja.",t:[15,15],st:["Lance le riz.","Coupe le filet mignon en fines lamelles.","Saisis-le dans l'huile à feu vif 3 min, réserve.","Fais sauter carottes et courgette 5 min, remets la viande, ajoute la sauce soja 1 min."],prot:"porc",carb:"riz",fat:"huile",fx:{carottes:80,courgette:100,soja:15}}
 ];
 const BKF=[
+ {n:"Flocons d'avoine, muesli chocolat et lait",fixedOnly:true,how:"Flocons d'avoine et muesli chocolat au lait Intermarché dans un bol, avec du lait froid ou chaud.",t:[2,0],st:["Verse les flocons d'avoine et le muesli dans un bol.","Ajoute le lait, froid ou chauffé 1 min au micro-ondes."],prot:"avoine",carb:null,fat:null,fx:{muesli:35,lait:250}},
  {n:"Porridge protéiné à la banane",how:"Avoine cuite dans le lait 3 min, whey ajoutée hors du feu, banane en rondelles.",t:[3,4],st:["Fais chauffer l'avoine dans le lait 3 à 4 min en remuant.","Hors du feu, ajoute la whey et mélange bien.","Ajoute la banane en rondelles et le beurre de cacahuète."],prot:"whey",carb:"avoine",fat:"cacahuete",fx:{lait:250,banane:120}},
  {n:"Œufs brouillés et tartines complètes",sale:true,how:"Œufs brouillés au beurre, pain complet grillé, une pomme.",t:[3,5],st:["Fais griller le pain.","Bats les œufs, cuis-les à feu doux dans le beurre en remuant 3 min.","Sers avec la pomme."],prot:"oeuf",carb:"painc",fat:"beurre",fx:{pomme:150}},
  {n:"Fromage blanc, avoine et fruits rouges",how:"Fromage blanc, flocons d'avoine, fruits rouges décongelés, amandes et un filet de miel.",t:[3,0],st:["La veille, sors les fruits rouges au frigo ou passe-les 1 min au micro-ondes.","Mélange fromage blanc et avoine.","Ajoute fruits rouges, amandes et miel."],prot:"fblanc",carb:"avoine",fat:"amandes",fx:{frouges:100,miel:10}},
@@ -333,7 +335,7 @@ const SNK=[
  {n:"Fromage blanc aux fruits rouges et amandes",how:"",t:[2,0],st:["Fruits rouges décongelés dans le fromage blanc, amandes et miel par-dessus."],prot:"fblanc",carb:"frouges",fat:"amandes",fx:{miel:10}}
 ];
 /* Prix moyens en euros par kg (ou par litre), marque distributeur, grande surface, fin 2026. PRB : surgelés et gros paquets */
-const PR={poulet:11,dinde:11,boeuf5:10,rumsteck:16,porc:13,jambon:12,saumon:20,thon:12,oeuf:5.5,lentilles:3.5,hrouges:2.5,pchiches:2.5,riz:2,pates:1.5,semoule:2,quinoa:7,pdt:1.5,patdouce:3,painc:4,painburger:5,tortilla:5,avoine:2,lait:1,skyr:4.5,fblanc:2.5,whey:25,emmental:9,creme:4,huile:10,beurre:10,cacahuete:8,amandes:15,avocat:6,pesto:12,choco:10,miel:10,banane:2,pomme:2.5,frouges:6,brocoli:3,hverts:3,courgette:2.5,epinards:2.5,carottes:1.2,tomates:3,champi:5,salade:4,ppois:2.5,coulis:2,soja:6};
+const PR={muesli:4.5,poulet:11,dinde:11,boeuf5:10,rumsteck:16,porc:13,jambon:12,saumon:20,thon:12,oeuf:5.5,lentilles:3.5,hrouges:2.5,pchiches:2.5,riz:2,pates:1.5,semoule:2,quinoa:7,pdt:1.5,patdouce:3,painc:4,painburger:5,tortilla:5,avoine:2,lait:1,skyr:4.5,fblanc:2.5,whey:25,emmental:9,creme:4,huile:10,beurre:10,cacahuete:8,amandes:15,avocat:6,pesto:12,choco:10,miel:10,banane:2,pomme:2.5,frouges:6,brocoli:3,hverts:3,courgette:2.5,epinards:2.5,carottes:1.2,tomates:3,champi:5,salade:4,ppois:2.5,coulis:2,soja:6};
 const PRB={poulet:7.5,dinde:7.5,boeuf5:8,brocoli:2.5,courgette:2.2,champi:4,amandes:12,whey:20};
 function price(k,g){const v=(S.cheap&&PRB[k]!=null?PRB[k]:PR[k])||0;return g/1000*v}
 const euro=x=>x.toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" €";
@@ -358,10 +360,10 @@ function eatsOut(p,date){
 /* ---------- État ---------- */
 function nextMonday(){const d=new Date();d.setHours(12,0,0,0);const k=(8-d.getDay())%7||7;d.setDate(d.getDate()+k);return d.toISOString().slice(0,10)}
 const DEFAULT={
- tab:"jour",week:0,seed:20261116,start:nextMonday(),days:30,excl:["fdm"],v:2,
+ tab:"jour",week:0,seed:20261116,start:nextMonday(),days:30,excl:["fdm"],v:3,
  people:[
-  {name:"Anthony",sex:"H",age:22,h:188,w:85,act:2,goal:"recompo",snack:true,lunch:"home",sweet:false,train:[true,true,false,true,true,false,false]},
-  {name:"Princesse",sex:"F",age:22,h:165,w:60,act:1,goal:"recompo",snack:true,lunch:"alt",sweet:true,train:[false,true,false,false,true,false,false]}
+  {name:"Anthony",sex:"H",age:22,h:188,w:85,act:2,goal:"recompo",snack:false,lunch:"home",sweet:false,bkfFixed:"",train:[true,true,false,true,true,false,false]},
+  {name:"Princesse",sex:"F",age:22,h:165,w:60,act:1,goal:"recompo",snack:false,lunch:"alt",sweet:true,bkfFixed:"Flocons d'avoine, muesli chocolat et lait",train:[false,true,false,false,true,false,false]}
  ],
  checked:{}
 };
@@ -490,14 +492,17 @@ const BOUNDS={
  main:{riz:[50,165],pates:[50,165],semoule:[50,165],quinoa:[50,145],pdt:[160,400],patdouce:[160,400],tortilla:[60,240],painc:[50,140],lentilles:[45,155],
   poulet:[95,245],dinde:[95,245],boeuf5:[95,245],rumsteck:[95,245],porc:[95,245],jambon:[60,195],thon:[65,200],crevettes:[95,245],oeuf:[110,275],
   huile:[0,18],beurre:[0,18],creme:[20,75],emmental:[15,45],pesto:[10,32],avocat:[40,150]},
- bkf:{avoine:[35,115],painc:[45,135],whey:[10,38],fblanc:[100,320],oeuf:[110,220],beurre:[0,12],cacahuete:[10,28],amandes:[10,32]},
+ bkf:{lait:[150,350],muesli:[20,45],avoine:[35,115],painc:[45,135],whey:[10,38],fblanc:[100,320],oeuf:[110,220],beurre:[0,12],cacahuete:[10,28],amandes:[10,32]},
  snack:{fblanc:[100,290],whey:[15,38],banane:[60,240],avoine:[20,65],pomme:[75,300],choco:[10,24],jambon:[40,115],painc:[35,95],beurre:[0,8],amandes:[10,28],frouges:[60,240]}
 };
 const BREAD=[0,100];
 /* les fourchettes s'adaptent au gabarit : un peu plus basses pour un petit appétit, un peu plus hautes pour un gros */
+/* plafonds absolus, quel que soit le gabarit */
+const HARDMAX={main:{riz:200,pates:200,semoule:200,quinoa:180,lentilles:190,painc:150},bkf:{avoine:130,painc:160,muesli:90},snack:{avoine:80,painc:115}};
 const NOSCALEHI=["pdt","patdouce","oeuf","tortilla","frouges","banane","pomme"];
 function boundsFor(kind,f,sz,role){const b=BOUNDS[kind][f]||[0,F[f].max||300];let lo=b[0],hi=b[1];
- if(role==="carb"||role==="bread"||role==="prot"){lo=lo*clamp(sz,role==="prot"?0.8:0.7,1);if(role!=="prot"&&!NOSCALEHI.includes(f))hi=hi*clamp(sz,1,1.25)}
+ if(role==="carb"||role==="bread"||role==="prot"){lo=lo*clamp(sz,role==="prot"?0.8:0.7,1);if(role!=="prot"&&!NOSCALEHI.includes(f))hi=hi*clamp(sz,1,1.35)}
+ const cap=(HARDMAX[kind]||{})[f];if(cap)hi=Math.min(hi,cap);
  return [Math.round(lo),Math.round(hi)]}
 function fixedItems(rec,s){const items={};for(const k in rec.fx){let r=roundItem(k,rec.fx[k]*s);const st=F[k].pc?F[k].pc*(F[k].step||1):0;if(st&&r<st)r=st;if(r>0)items[k]=(items[k]||0)+r}return items}
 /* Portions d'une journée : un calcul d'optimisation sur toute la journée.
@@ -506,7 +511,8 @@ function fixedItems(rec,s){const items={};for(const k in rec.fx){let r=roundItem
 function personDay(pi,i){
  const p=S.people[pi],day=PLAN[i];if(!day)return null;
  const tr=!!p.train[dow(day.date)],out=eatsOut(p,day.date),sh=shares(p.snack),t=dayTarget(p,tr);
- const s=clamp(t.kcal/2800,0.65,1.15),sz=clamp(t.kcal/2800,0.6,1.25);
+ /* sans collation, les trois repas doivent être un peu plus copieux */
+ const s=clamp(t.kcal/2800,0.65,1.15),sz=clamp(t.kcal/2800*(p.snack?1:1.12),0.6,1.35);
  const f=out?1-sh.lunch:1;
  const T={p:t.P*f,l:t.L*f,g:t.G*f};T.k=4*T.p+9*T.l+4*T.g;
  const res={bkf:null,lunch:null,snack:null,dinner:null,out,tr,target:{kcal:Math.round(t.kcal*f),P:Math.round(T.p),G:Math.round(T.g),L:Math.round(T.l)},recs:{}};
@@ -520,7 +526,7 @@ function personDay(pi,i){
   const init=portion(rec,share,s,share);
   const vars=[];
   const addVar=(food,role)=>{if(!food)return;const b=boundsFor(kind,food,sz,role);const x0=clamp((init[food]||0)-(fixed[food]||0),b[0],b[1]);vars.push({food,role,lo:b[0],hi:b[1],x:x0,x0,sc:Math.max(x0,(b[1]-b[0])/2,30)})};
-  addVar(rec.prot,"prot");if(rec.carb&&rec.carb!==rec.prot)addVar(rec.carb,"carb");if(rec.fat)addVar(rec.fat,"fat");
+  addVar(rec.prot,"prot");if(rec.carb&&rec.carb!==rec.prot)addVar(rec.carb,"carb");if(rec.fat)addVar(rec.fat,"fat");(rec.xv||[]).forEach(x=>vars.push({food:x.f,role:"extra",lo:x.lo,hi:x.hi,x:x.lo,x0:x.lo,sc:50}));
   /* pain complet en accompagnement, utilisé seulement si le plat ne suffit pas */
   if(kind==="main"&&!["painc","tortilla"].includes(rec.carb)&&!rec.fx.painburger){vars.push({food:"painc",role:"bread",lo:0,hi:Math.round(BREAD[1]*clamp(sz,1,1.25)),x:0,x0:0,sc:60})}
   meals.push({k,rec,kind,fixed,fm,vars,kt:t.kcal*sh[k]});
@@ -546,11 +552,26 @@ function personDay(pi,i){
   m.vars.forEach(v=>{
    let r=roundItem(v.food,v.x);const fd=F[v.food];
    if(fd.pc){const st=fd.pc*(fd.step||1);r=clamp(r,Math.ceil(v.lo/st-1e-9)*st,Math.floor(v.hi/st+1e-9)*st)}else r=clamp(r,v.lo,v.hi);
-   if(v.role==="bread"&&r<25)r=0;
+   if(v.role==="bread")r=v.x<12?0:Math.max(25,r);
+   if(v.role==="extra"&&v.lo===0)r=v.x<10?0:Math.max(20,r);
    if(r>0)items[v.food]=(items[v.food]||0)+r;
   });
   res[m.k]=items;
  });
+ /* l'arrondi peut faire perdre ou gagner quelques dizaines de kcal : on rattrape sur les féculents du midi et du soir, puis du petit déjeuner */
+ const dayK=()=>{let K=0;meals.forEach(m=>{K+=macrosOf(res[m.k]).kcal});return K};
+ const adj=[];["lunch","dinner","bkf"].forEach(k=>{const m=meals.find(x=>x.k===k);if(!m)return;m.vars.filter(v=>v.role==="carb"||v.role==="bread").forEach(v=>adj.push({m,v}))});
+ for(let pass=0;pass<40;pass++){
+  const gap=T.k-dayK();if(Math.abs(gap)<T.k*0.025)break;
+  let done=false;
+  for(const {m,v} of adj){const it=res[m.k],fd=F[v.food],cur=(it[v.food]||0)-(m.fixed[v.food]||0);
+   const step=fd.pc?fd.pc*(fd.step||1):(v.role==="bread"&&cur===0?25:10);
+   const nv=cur+(gap>0?step:-step);
+   if(nv<v.lo-1e-9||nv>v.hi+1e-9||(v.role==="bread"&&nv>0&&nv<25))continue;
+   const dk=step*(4*fd.p+9*fd.l+4*fd.g)/100;if(dk>Math.abs(gap)*1.6)continue;
+   it[v.food]=(m.fixed[v.food]||0)+nv;if(!(it[v.food]>0))delete it[v.food];done=true;break}
+  if(!done)break;
+ }
  return res;
 }
 const DCACHE=new Map();
@@ -560,8 +581,9 @@ function pd(pi,i){const k=pi+":"+i;if(!DCACHE.has(k))DCACHE.set(k,personDay(pi,i
 function rng(seed){let a=seed>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 function hash(s){let h=2166136261;for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
 function recFor(p,day,k,di){
+ if(k==="bkf"&&p.bkfFixed){const fx=byName(p.bkfFixed);if(fx)return fx}
  const r=day[k];if(!p.sweet||!r.sale||(k!=="bkf"&&k!=="snack"))return r;
- const pool=(k==="bkf"?BKF:SNK).filter(x=>!x.sale&&ok(x));const list=pool.length?pool:(k==="bkf"?BKF:SNK).filter(x=>!x.sale);
+ const pool=(k==="bkf"?BKF:SNK).filter(x=>!x.sale&&!x.fixedOnly&&ok(x));const list=pool.length?pool:(k==="bkf"?BKF:SNK).filter(x=>!x.sale&&!x.fixedOnly);
  return list[(di||0)%list.length];
 }
 function fams(rec){const s=new Set();[rec.prot,rec.carb,rec.fat,...Object.keys(rec.fx)].forEach(k=>{if(k&&F[k].fam)s.add(F[k].fam)});return s}
@@ -569,15 +591,15 @@ function allowed(rec){const f=fams(rec);return !S.excl.some(e=>f.has(e))}
 function banned(rec){return (S.banned||[]).includes(rec.n)}
 function ok(rec){return allowed(rec)&&!banned(rec)}
 function shuffle(a,r){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
-const POOL={bkf:()=>BKF,snack:()=>SNK,lunch:()=>MAINS,dinner:()=>MAINS};
+const POOL={bkf:()=>BKF.filter(x=>!x.fixedOnly),snack:()=>SNK,lunch:()=>MAINS,dinner:()=>MAINS};
 const byName=n=>MAINS.concat(BKF,SNK).find(r=>r.n===n);
 let PLAN=null,BASE=null,PLANWARN="";
 function buildPlan(){
  const r=rng(S.seed);
- let mains=MAINS.filter(allowed),bk=BKF.filter(allowed),sn=SNK.filter(allowed);
+ let mains=MAINS.filter(allowed),bk=BKF.filter(x=>allowed(x)&&!x.fixedOnly),sn=SNK.filter(allowed);
  PLANWARN="";
  if(mains.length<6){PLANWARN="Avec ces exclusions il reste trop peu de plats : certaines recettes exclues sont réutilisées.";mains=MAINS.slice()}
- if(!bk.length)bk=BKF.slice();if(!sn.length)sn=SNK.slice();
+ if(!bk.length)bk=BKF.filter(x=>!x.fixedOnly);if(!sn.length)sn=SNK.slice();
  let deck=shuffle(mains,r);const recent=[];
  const pick=(avoidFam)=>{
   const okp=x=>!recent.includes(x)&&F[x.prot].fam!==avoidFam;
@@ -810,6 +832,7 @@ function sheetMeal(o){
  }
  if(k==="lunch"&&day.left)body+=`<div class="note">Ce sont les restes du dîner d'hier soir. Rien à cuisiner, juste à réchauffer.</div>`;
  if(rec.st&&rec.st.length){const t=rec.t||[0,0];body+=`<div><div class="sec"><h2>Recette</h2><span class="aside">${t[0]} min de préparation${t[1]?` · ${t[1]} min de cuisson`:""}</span></div><ol class="steps">${rec.st.map(s=>`<li><span>${esc(s)}</span></li>`).join("")}</ol></div>`}
+ if(k==="bkf"&&who.every(pi=>S.people[pi].bkfFixed===rec.n)){body+=`<div class="note" style="margin-top:18px">Petit déjeuner fixe : il revient tous les jours. Pour le changer, va dans Réglages puis le profil.</div>`;return {kicker:`${MLAB[k]} · ${fmtLong(day.date)}`,title:rec.n,body}}
  body+=`<div class="stack" style="margin-top:22px"><button class="btn pri full" data-a="swap" data-v="${i}|${k}">${ic("swap")}Changer de plat</button><div class="grid2"><button class="btn line" data-a="ban" data-v="${i}|${k}">Je n'aime pas</button>${day.ov[k]?`<button class="btn line" data-a="reset" data-v="${i}|${k}">${ic("undo")}Plat prévu</button>`:`<button class="btn line" data-a="close">Fermer</button>`}</div><p class="muted tiny" style="margin:0;text-align:center">« Je n'aime pas » retire ce plat de tous les menus. Tu peux le remettre dans Réglages.</p></div>`;
  return {kicker:`${MLAB[k]} · ${fmtLong(day.date)}`,title:rec.n,body};
 }
@@ -937,6 +960,7 @@ function sheetProfile(pi){
  <label class="field">Objectif<select data-p="${pi}" data-f="goal">${Object.entries(GOALS).map(([k,g])=>`<option value="${k}"${p.goal===k?" selected":""}>${g[0]}</option>`).join("")}</select></label>
  <div class="field">Jours de salle<div class="dw">${JOURS.map((j,d)=>`<button class="${p.train[d]?"on":""}" aria-pressed="${p.train[d]}" data-a="tr" data-v="${pi}:${d}" aria-label="${WD[d]}">${j}</button>`).join("")}</div></div>
  <label class="field">Le midi en semaine<select data-p="${pi}" data-f="lunch">${LUNCH.map(([k,l])=>`<option value="${k}"${p.lunch===k?" selected":""}>${l}</option>`).join("")}</select></label>
+ <label class="field">Petit déjeuner<select data-p="${pi}" data-f="bkfFixed"><option value=""${!p.bkfFixed?" selected":""}>Varié, choisi par l'appli</option>${BKF.map(r=>`<option value="${esc(r.n)}"${p.bkfFixed===r.n?" selected":""}>Toujours : ${esc(r.n)}</option>`).join("")}</select></label>
  <div class="list"><button class="li" data-a="snack" data-v="${pi}"><div class="t"><b>Collation</b><small>Un en-cas dans la journée</small></div>${sw(p.snack)}</button><button class="li" data-a="sweet" data-v="${pi}"><div class="t"><b>Petit déjeuner sucré uniquement</b></div>${sw(p.sweet)}</button></div>`};
 }
 function sheetSync(){
@@ -1064,10 +1088,14 @@ document.addEventListener("change",e=>{
 });
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&S.sheet)closeSheet();if(e.key==="Enter"&&e.target.id==="wkg"){const b=document.querySelector('[data-a="addw"]');if(b)b.click()}});
 
-const APPV="2026-11-18";
+const APPV="2026-11-18c";
 /* ---------- Démarrage ---------- */
 if(S.tab==="menus")S.tab="jour";else if(S.tab==="profils")S.tab="moi";
-function renamePrincess(){const p=S.people[1];if(p&&(p.name==="Ma conjointe"||p.name==="Personne 2")){p.name="Princesse";return true}return false}
+function renamePrincess(){let ch=false;const p=S.people[1];if(p&&(p.name==="Ma conjointe"||p.name==="Personne 2")){p.name="Princesse";ch=true}
+ /* version 3 : pas de collation, petit déjeuner fixe pour Princesse */
+ if((S.v||0)<3){S.people.forEach(q=>{q.snack=false});if(S.people[1]&&!S.people[1].bkfFixed)S.people[1].bkfFixed="Flocons d'avoine, muesli chocolat et lait";S.v=3;ch=true}
+ S.people.forEach(q=>{if(q.bkfFixed===undefined)q.bkfFixed=""});
+ return ch}
 renamePrincess();
 S.sheet=null;
 if(S.owner!=null&&S.people[S.owner])S.me=S.owner;
