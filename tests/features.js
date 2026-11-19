@@ -63,6 +63,23 @@ const V3={tab:"jour",week:0,seed:20261116,start:"2026-11-16",days:30,excl:["fdm"
   check("jamais sous le métabolisme de base",tp.kcal>=1200&&tp.kcal>=Math.round(bmr)-2,[tp,bmr]);
   check("aucune erreur JS",errs.length===0,errs);
  }
+ // 1 ter. poids une fois cuit et partage après cuisson, boîtes comprises
+ {const st=JSON.parse(JSON.stringify(V3));st.v=6;st.days=28;st.leftovers=true;st.ov={};st.banned=[];st.people[0].kadj=-300;st.people[1].kadj=0;
+  const {w,d,errs}=await boot(st,"2026-11-18T09:00:00");
+  const i=w.eval("PLAN.findIndex((x,j)=>PLAN[j+1]&&PLAN[j+1].left&&PLAN[j+1].lunch===x.dinner&&['poulet','dinde','porc','boeuf5'].includes(x.dinner.prot)&&S.people.every((p,pi)=>pd(pi,j).dinner&&pd(pi,j+1).lunch))");
+  check("un dîner avec boîtes pour deux existe",i>=0,i);
+  w.eval(`S.sheet={t:"meal",i:${i},k:"dinner",n:PLAN[${i}].dinner.n,sel:"all"};renderSheet()`);
+  const txt=d.getElementById("sheet").textContent;
+  check("section Une fois cuit",/Une fois cuit/.test(txt));
+  check("boîtes dans le partage",/boîte d'Anthony/.test(txt)&&/boîte de Princesse/.test(txt),txt.slice(0,300));
+  const prot=w.eval(`PLAN[${i}].dinner.prot`);
+  const raw=w.eval(`[0,1].reduce((a,pi)=>a+(pd(pi,${i}).dinner['${prot}']||0)+(pd(pi,${i}+1).lunch['${prot}']||0),0)`);
+  const shown=w.eval(`(()=>{const nm=COOKN['${prot}'];const li=[...document.querySelectorAll('#sheet .li')].find(e=>e.textContent.trim().startsWith(nm));return li?parseInt(li.querySelector('.v').textContent):null})()`);
+  check("total cuit cohérent avec le total cru",shown!==null&&Math.abs(shown-raw*w.eval(`COOK['${prot}']`))<=5,[shown,raw]);
+  w.eval(`S.sheet={t:"meal",i:${i},k:"dinner",n:PLAN[${i}].dinner.n,sel:0};renderSheet()`);
+  check("poids cuit sous le poids cru",/≈ \d+ g cuite?s?/.test(d.getElementById("sheet").textContent));
+  check("aucune erreur JS",errs.length===0,errs);
+ }
  // 2. semaines passées, semaine ouverte, validation
  {const st=JSON.parse(JSON.stringify(V3));st.v=5;st.days=28;st.start="2026-11-02";st.done={};st.ledger={};st.checked={};
   const {w,d,errs}=await boot(st,"2026-11-18T09:00:00");
