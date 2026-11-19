@@ -8,7 +8,7 @@ Les besoins de chacun sont calculés avec la formule de Mifflin St Jeor à parti
 
 Chaque jour propose un petit déjeuner, un midi et un dîner. Les portions sont données en grammes crus pour chaque personne, et chaque plat a sa recette avec les temps de préparation et de cuisson. Les plats de 20 minutes ou moins sont marqués Rapide.
 
-Comme la viande perd environ un quart de son poids à la cuisson et que les féculents en prennent, l'appli donne aussi le poids une fois cuit. Quand on cuisine pour deux, la fiche Les deux indique comment partager ce qui sort de la poêle, assiette par assiette et boîte par boîte.
+Comme la viande perd du poids à la cuisson et que les féculents en prennent, l'appli donne aussi une estimation du poids une fois cuit. Quand on cuisine pour deux, la fiche Les deux sert au partage : on pèse tout ce qui sort de la poêle, on note le poids, et l'appli calcule la part de chaque assiette et de chaque boîte. Elle retient la cuisson pour les fois suivantes, sur le téléphone qui a servi.
 
 Les quantités de toute la journée sont calculées ensemble pour viser les protéines, les glucides, les lipides et les calories, avec pour chaque aliment une fourchette réaliste selon le repas. Si un plat ne suffit pas, du pain complet vient en accompagnement. Les jours où l'objectif ne peut pas être atteint, l'appli le dit et propose quoi ajouter.
 

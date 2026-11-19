@@ -143,6 +143,8 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .li .t small{display:block;color:var(--muted);font-size:13px;margin-top:1px}
 .li .v{color:var(--muted);font-size:15px;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
 .li .v small{display:block;font-size:12.5px;margin-top:1px;opacity:.85}
+.li .v.cookin{display:flex;align-items:center;gap:6px}
+.li .v.cookin input{width:84px;border:1.5px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 10px;font-size:16px;text-align:right;color:var(--ink)}
 .li .chev{width:18px;height:18px;color:var(--faint);flex:none}
 .li input[type=date],.li select{border:0;background:var(--surface2);border-radius:10px;padding:7px 10px;font-size:16px}
 .ck{width:26px;height:26px;border-radius:50%;border:2px solid var(--line);flex:none;display:flex;align-items:center;justify-content:center}
@@ -766,10 +768,15 @@ const fr=(x,d=0)=>Number(x).toLocaleString("fr-FR",{maximumFractionDigits:d,mini
 function nWeeks(){return Math.ceil(S.days/7)}
 /* poids une fois cuit pour 1 g cru, en moyenne : la viande perd de l'eau, les féculents en prennent.
    Les quantités restent données crues, le poids cuit sert à partager ce qui sort de la poêle ou de la casserole. */
-const COOK={poulet:.75,dinde:.75,porc:.7,boeuf5:.7,rumsteck:.75,crevettes:.8,riz:2.6,pates:2.3,semoule:2.4,quinoa:2.7};
+const COOK={poulet:.7,dinde:.7,porc:.7,boeuf5:.7,rumsteck:.7,crevettes:.8,riz:2.6,pates:2.3,semoule:2.4,quinoa:2.7};
 const COOKN={poulet:"Poulet cuit",dinde:"Dinde cuite",porc:"Porc cuit",boeuf5:"Haché cuit",rumsteck:"Bœuf cuit",crevettes:"Crevettes cuites",riz:"Riz cuit",pates:"Pâtes cuites",semoule:"Semoule cuite",quinoa:"Quinoa cuit"};
 const COOKW={dinde:"cuite",semoule:"cuite",pates:"cuites",crevettes:"cuites"};
-const cuit=(x,g)=>Math.max(5,Math.round(g*COOK[x]/5)*5);
+/* la cuisson change d'une poêle à l'autre (et la viande surgelée rend plus d'eau) : quand on pèse ce qui sort de la poêle,
+   l'appli partage ce poids réel et retient le rapport cuit sur cru pour la fois suivante, sur ce téléphone */
+let CUISSON={};try{CUISSON=JSON.parse(localStorage.getItem("menus-cuisson-v1")||"{}")||{}}catch(e){CUISSON={}}
+const yieldOf=x=>{const v=+CUISSON[x];return v>0?v:COOK[x]};
+const yieldRange=x=>COOK[x]<1?[.45,1]:[1.4,4];
+const cuit=(x,g)=>Math.max(5,Math.round(g*yieldOf(x)/5)*5);
 function qty(k,g){const f=F[k];if(f.pc){const u=g/f.pc;const n=Number.isInteger(u)?u:u.toFixed(1).replace(".",",");return n+" "+(u>1?f.unit[1]:f.unit[0])}return g>=1000?(g/1000).toFixed(2).replace(".",",")+" kg":Math.round(g)+" g"}
 function shopQty(k,g){const f=F[k];if(f.pc){const u=Math.ceil(g/f.pc);return u+" "+(u>1?f.unit[1]:f.unit[0])}if(k==="lait")return (Math.ceil(g/100)/10).toFixed(1).replace(".",",")+" L";const r=Math.ceil(g/50)*50;return r>=1000?(r/1000).toFixed(r%1000?2:0).replace(".",",")+" kg":r+" g"}
 function sumItems(list){const o={};list.forEach(m=>{if(m)for(const k in m)o[k]=(o[k]||0)+m[k]});return o}
@@ -877,7 +884,7 @@ function sheetMeal(o){
  const ingList=items=>`<div class="list ing">${Object.keys(items).sort((a,b)=>rank(a)-rank(b)).map(x=>`<div class="li"><div class="t"><b>${esc(F[x].n)}</b>${side(x)?"<small>en accompagnement</small>":""}</div><div class="v">${qty(x,items[x])}${COOK[x]?`<small>≈ ${cuit(x,items[x])} g ${COOKW[x]||"cuit"}</small>`:""}</div></div>`).join("")}</div>`;
  /* partage après cuisson quand on cuisine pour plusieurs : chaque assiette et chaque boîte, en poids cuit */
  const share=(parts)=>{const xs=[...new Set(parts.flatMap(([,m])=>Object.keys(m||{})))].filter(x=>COOK[x]).sort((a,b)=>rank(a)-rank(b));if(!xs.length)return "";
-  return `<div><div class="sec"><h2>Une fois cuit</h2><span class="aside">pour partager</span></div><div class="list ing">${xs.map(x=>{const ps=parts.filter(([,m])=>m&&m[x]);const tot=ps.reduce((a,[,m])=>a+m[x],0);return `<div class="li"><div class="t"><b>${COOKN[x]}</b><small>${ps.map(([l,m])=>l+" "+cuit(x,m[x])+" g").join(" · ")}</small></div><div class="v">${cuit(x,tot)} g</div></div>`}).join("")}</div><p class="muted tiny" style="margin:8px 0 0">Les quantités sont pesées crues. Après cuisson, la viande perd environ un quart de son poids et les féculents en prennent, d'où ces poids à peu près.</p></div>`};
+  return `<div><div class="sec"><h2>Une fois cuit</h2><span class="aside">pèse et partage</span></div><div class="list ing">${xs.map(x=>{const ps=parts.filter(([,m])=>m&&m[x]);const tot=ps.reduce((a,[,m])=>a+m[x],0);return `<div class="li" data-cookrow="${x}"><div class="t"><b>${COOKN[x]}</b><small>${ps.map(([l,m])=>`${l} <span data-r="${m[x]}">${cuit(x,m[x])} g</span>`).join(" · ")}</small></div><div class="v cookin"><input type="number" inputmode="numeric" min="0" step="5" data-cook="${x}" data-raw="${tot}" placeholder="${cuit(x,tot)}" aria-label="${COOKN[x]}, poids pesé en grammes"> g</div></div>`}).join("")}</div><p class="muted tiny" style="margin:8px 0 0">Les quantités sont données crues. Pèse tout ce qui sort de la poêle ou de la casserole et note le poids à droite : les parts se recalculent. L'appli retient ta cuisson pour la fois suivante.</p></div>`};
  let body="";
  if(who.length>1){const opts=who.map(pi=>[pi,first(S.people[pi])]);opts.push(["all","Les deux"]);body+=seg(opts,sel,"msel")}
  if(sel==="all"){
@@ -891,6 +898,7 @@ function sheetMeal(o){
   const items=pd(+sel,i)[k],m=macrosOf(items);
   body+=`<div class="macro"><span><b>${fr(m.kcal)}</b> kcal</span><span class="p"><b>${Math.round(m.p)} g</b> prot.</span><span class="g"><b>${Math.round(m.g)} g</b> gluc.</span><span class="l"><b>${Math.round(m.l)} g</b> lip.</span></div>${ingList(items)}`;
   if(boxes)body+=`<div class="note">Ce soir, cuisine aussi pour la boîte de demain midi. Les quantités totales sont dans « Les deux »${who.length<2?" ou dans la fiche de demain":""}.</div>`;
+  if(boxes&&who.length<2){const b=pd(+sel,i+1).lunch;if(b)body+=share([["ce soir",items],["boîte de demain",b]])}
  }
  if(k==="lunch"&&day.left)body+=`<div class="note">Ce sont les restes du dîner d'hier soir. Rien à cuisiner, juste à réchauffer.</div>`;
  if(rec.st&&rec.st.length){const t=rec.t||[0,0];body+=`<div><div class="sec"><h2>Recette</h2><span class="aside">${t[0]} min de préparation${t[1]?` · ${t[1]} min de cuisson`:""}</span></div><ol class="steps">${rec.st.map(s=>`<li><span>${esc(s)}</span></li>`).join("")}</ol></div>`}
@@ -1163,9 +1171,16 @@ document.addEventListener("change",e=>{
   p[f]=v;refresh();return}
  if(t.dataset.g){if(t.dataset.g==="start"){if(!t.value)return;S.start=t.value}else S.days=+t.value;S.week=0;S.day=0;refresh(true)}
 });
+document.addEventListener("input",e=>{
+ const t=e.target;if(!t.dataset||!t.dataset.cook)return;
+ const x=t.dataset.cook,R=+t.dataset.raw,v=parseFloat(String(t.value).replace(",","."));const row=t.closest("[data-cookrow]");if(!row||!(R>0))return;
+ const [a,b]=yieldRange(x),f=v>0?v/R:yieldOf(x),ok=v>0&&f>=a&&f<=b;
+ row.querySelectorAll("[data-r]").forEach(sp=>{sp.textContent=Math.max(5,Math.round(+sp.dataset.r*(ok?f:yieldOf(x))/5)*5)+" g"});
+ if(ok){CUISSON[x]=Math.round(f*100)/100;try{localStorage.setItem("menus-cuisson-v1",JSON.stringify(CUISSON))}catch(err){}}
+});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&S.sheet)closeSheet();if(e.key==="Enter"&&e.target.id==="wkg"){const b=document.querySelector('[data-a="addw"]');if(b)b.click()}});
 
-const APPV="2026-11-19a";
+const APPV="2026-11-19b";
 /* ---------- Démarrage ---------- */
 if(S.tab==="menus")S.tab="jour";else if(S.tab==="profils")S.tab="moi";
 function renamePrincess(){let ch=false;const p=S.people[1];if(p&&(p.name==="Ma conjointe"||p.name==="Personne 2")){p.name="Princesse";ch=true}

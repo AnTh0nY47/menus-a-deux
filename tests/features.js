@@ -74,9 +74,18 @@ const V3={tab:"jour",week:0,seed:20261116,start:"2026-11-16",days:30,excl:["fdm"
   check("boîtes dans le partage",/boîte d'Anthony/.test(txt)&&/boîte de Princesse/.test(txt),txt.slice(0,300));
   const prot=w.eval(`PLAN[${i}].dinner.prot`);
   const raw=w.eval(`[0,1].reduce((a,pi)=>a+(pd(pi,${i}).dinner['${prot}']||0)+(pd(pi,${i}+1).lunch['${prot}']||0),0)`);
-  const shown=w.eval(`(()=>{const nm=COOKN['${prot}'];const li=[...document.querySelectorAll('#sheet .li')].find(e=>e.textContent.trim().startsWith(nm));return li?parseInt(li.querySelector('.v').textContent):null})()`);
-  check("total cuit cohérent avec le total cru",shown!==null&&Math.abs(shown-raw*w.eval(`COOK['${prot}']`))<=5,[shown,raw]);
-  w.eval(`S.sheet={t:"meal",i:${i},k:"dinner",n:PLAN[${i}].dinner.n,sel:0};renderSheet()`);
+  const inp=d.querySelector(`#sheet input[data-cook="${prot}"]`);
+  check("champ du poids pesé",!!inp,prot);
+  check("total cuit estimé cohérent avec le total cru",inp&&Math.abs(+inp.placeholder-raw*w.eval(`COOK['${prot}']`))<=5,[inp&&inp.placeholder,raw]);
+  if(inp){inp.value=String(Math.round(raw*0.6));inp.dispatchEvent(new w.Event('input',{bubbles:true}))}
+  const parts=[...inp.closest('[data-cookrow]').querySelectorAll('[data-r]')].map(x=>parseInt(x.textContent));
+  const sum=parts.reduce((a,b)=>a+b,0);
+  check("parts recalculées sur le poids pesé",Math.abs(sum-raw*0.6)<=5*parts.length,[sum,raw*0.6,parts]);
+  check("cuisson retenue",Math.abs(JSON.parse(w.localStorage.getItem("menus-cuisson-v1"))[prot]-0.6)<0.011,w.localStorage.getItem("menus-cuisson-v1"));
+  w.eval("renderSheet()");
+  check("estimation suivante avec la cuisson retenue",Math.abs(+d.querySelector(`#sheet input[data-cook="${prot}"]`).placeholder-raw*0.6)<=5);
+  const inp2=d.querySelector(`#sheet input[data-cook="${prot}"]`);inp2.value="4";inp2.dispatchEvent(new w.Event('input',{bubbles:true}));
+  check("saisie en cours pas retenue",Math.abs(JSON.parse(w.localStorage.getItem("menus-cuisson-v1"))[prot]-0.6)<0.011);
   check("poids cuit sous le poids cru",/≈ \d+ g cuite?s?/.test(d.getElementById("sheet").textContent));
   check("aucune erreur JS",errs.length===0,errs);
  }
