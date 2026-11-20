@@ -14,7 +14,7 @@ const out={cases:0,days:0,bad:{},ex:{}};const bad=(k,e)=>{out.bad[k]=(out.bad[k]
 const ALLEX=["poisson","fdm","porc","boeuf","volaille","oeuf"];
 for(let c=0;c<${N};c++){
  for(let pi=0;pi<2;pi++){const sex=pi===0?"H":pick(["F","F","H"]);const h=sex==="H"?ri(165,200):ri(150,182);const bmi=18.5+R()*13;
-  S.people[pi]=Object.assign({},S.people[pi],{sex,h,w:Math.round(bmi*(h/100)**2),age:ri(18,60),act:ri(0,4),goal:pick(["perte","recompo","maintien","prise"]),snack:R()<0.75,lunch:pick(["home","alt","week"]),sweet:R()<0.5,adj:pick([0,0,0,-600,-250,250,600]),train:[0,1,2,3,4,5,6].map(()=>R()<0.5),log:[]});}
+  S.people[pi]=Object.assign({},S.people[pi],{bkfFixed:R()<0.85?"":pick(BKF.map(r=>r.n)),kadj:0,sex,h,w:Math.round(bmi*(h/100)**2),age:ri(18,60),act:ri(0,4),goal:pick(["perte","recompo","maintien","prise"]),snack:R()<0.75,lunch:pick(["home","alt","week"]),sweet:R()<0.5,adj:pick([0,0,0,-600,-250,250,600]),train:[0,1,2,3,4,5,6].map(()=>R()<0.5),log:[]});}
  S.seed=ri(1,1e9);S.leftovers=R()<0.5;S.days=pick([7,14,28,30,31]);
  const d0=new Date(2026,10,1+ri(0,300),12);S.start=iso(d0);
  S.excl=ALLEX.filter(()=>R()<0.15);S.banned=MAINS.filter(()=>R()<0.08).map(r=>r.n);S.ov={};S.cheap=R()<0.5;S.stock={};S.done={};S.ledger={};S.checked={};

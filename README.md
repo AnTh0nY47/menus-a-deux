@@ -16,6 +16,8 @@ Le midi et le soir gardent chacun leur part de protéines, de lipides et de gluc
 
 Si les portions paraissent trop copieuses ou trop légères, le réglage Quantités du profil enlève ou ajoute des calories chaque jour, sans toucher aux protéines. Anthony est à 300 kcal de moins par jour.
 
+Le petit déjeuner peut être fixé dans le profil. Celui d'Anthony est verrouillé à ses quantités : 4 œufs brouillés, 2 tranches de blanc de poulet, 45 g de pain complet, 5 g de beurre et une pomme. Le midi et le soir s'adaptent autour.
+
 Un plat qui ne plaît pas se change d'un appui, ou se retire pour de bon avec Je n'aime pas. Les plats retirés se remettent depuis Réglages.
 
 Le petit déjeuner peut être fixe pour une personne. Princesse a toujours flocons d'avoine, muesli chocolat au lait Chabrior et lait.

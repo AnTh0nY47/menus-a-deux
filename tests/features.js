@@ -23,7 +23,10 @@ const V3={tab:"jour",week:0,seed:20261116,start:"2026-11-16",days:30,excl:["fdm"
 (async()=>{
  // 1. migration depuis la version 3
  {const {w,errs}=await boot(V3,"2026-11-18T09:00:00");const S=w.eval("S");
-  check("version 6",S.v===6,S.v);
+  check("version 7",S.v===7,S.v);
+  check("Anthony : petit déj fixe œufs et blanc de poulet",S.people[0].bkfFixed==="Œufs brouillés, blanc de poulet et tartines",S.people[0].bkfFixed);
+  check("petit déj d'Anthony aux quantités exactes tous les jours",w.eval("PLAN.every((d,i)=>{const b=pd(0,i).bkf;return b&&b.oeuf===220&&b.bpoulet===70&&b.painc===45&&b.beurre===5&&b.pomme===150})"));
+  check("Princesse garde son petit déj",w.eval("PLAN.every((d,i)=>{const b=pd(1,i).bkf;return b&&b.avoine>0&&b.muesli>0&&!b.oeuf})"));
   check("Anthony : 300 kcal de moins par jour",S.people[0].kadj===-300,S.people[0].kadj);
   check("Princesse : quantités comme calculé",S.people[1].kadj===0,S.people[1].kadj);
   check("Princesse 1m60",S.people[1].h===160,S.people[1].h);
@@ -44,11 +47,12 @@ const V3={tab:"jour",week:0,seed:20261116,start:"2026-11-16",days:30,excl:["fdm"
   check("Anthony : moyenne de la semaine = cible",Math.abs(w.eval("[0,1,2,3,4,5,6].map(i=>dayTarget(S.people[0],S.people[0].train[i]).kcal).reduce((a,b)=>a+b)/7")-2529)<3);
   const ta=w.eval("targets(S.people[0])");
   check("cible Anthony allégée, protéines gardées",ta.kcal===2529&&ta.P===170&&ta.L===77,ta);
-  check("Anthony : riz du soir raisonnable",w.eval("Object.values(PLAN.map((d,i)=>pd(0,i).dinner||{})).every(m=>!(m.riz>160)&&!(m.pates>160))"));
+  /* avec son petit déj fixe peu riche en glucides, la recompo monte jusqu'à 170 g le soir, contre 193 g avant le rééquilibrage */
+  check("Anthony : riz du soir raisonnable",w.eval("Object.values(PLAN.map((d,i)=>pd(0,i).dinner||{})).every(m=>!(m.riz>175)&&!(m.pates>175))"));
   check("aucune erreur JS",errs.length===0,errs);
  }
  // 1 bis. réglage « Quantités » du profil : moins copieux, plus copieux, plancher
- {const st=JSON.parse(JSON.stringify(V3));st.v=6;st.days=28;st.people[0].kadj=-300;st.people[1].kadj=0;
+ {const st=JSON.parse(JSON.stringify(V3));st.v=7;st.days=28;st.people[0].kadj=-300;st.people[1].kadj=0;
   const {w,d,errs}=await boot(st,"2026-11-18T09:00:00");
   check("migration déjà faite : réglage gardé",w.eval("S.people[0].kadj")===-300);
   w.eval("openSheet({t:'prof',pi:0})");
@@ -64,7 +68,7 @@ const V3={tab:"jour",week:0,seed:20261116,start:"2026-11-16",days:30,excl:["fdm"
   check("aucune erreur JS",errs.length===0,errs);
  }
  // 1 ter. poids une fois cuit et partage après cuisson, boîtes comprises
- {const st=JSON.parse(JSON.stringify(V3));st.v=6;st.days=28;st.leftovers=true;st.ov={};st.banned=[];st.people[0].kadj=-300;st.people[1].kadj=0;
+ {const st=JSON.parse(JSON.stringify(V3));st.v=7;st.days=28;st.leftovers=true;st.ov={};st.banned=[];st.people[0].kadj=-300;st.people[1].kadj=0;
   const {w,d,errs}=await boot(st,"2026-11-18T09:00:00");
   const i=w.eval("PLAN.findIndex((x,j)=>PLAN[j+1]&&PLAN[j+1].left&&PLAN[j+1].lunch===x.dinner&&['poulet','dinde','porc','boeuf5'].includes(x.dinner.prot)&&S.people.every((p,pi)=>pd(pi,j).dinner&&pd(pi,j+1).lunch))");
   check("un dîner avec boîtes pour deux existe",i>=0,i);
