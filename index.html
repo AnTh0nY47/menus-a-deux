@@ -284,7 +284,14 @@ const F={
  salade:{n:"Salade verte",p:1.3,l:0.2,g:2,r:"Fruits et légumes"},
  ppois:{n:"Petits pois",p:5,l:0.4,g:10,r:"Surgelés"},
  coulis:{n:"Coulis de tomate",p:1.5,l:0.3,g:6,r:"Épicerie"},
- soja:{n:"Sauce soja",p:8,l:0,g:5,r:"Épicerie"}
+ soja:{n:"Sauce soja",p:8,l:0,g:5,r:"Épicerie"},
+ epaule:{n:"Épaule de porc",p:19,l:12,g:0,r:"Viandes et poissons",fam:"porc",max:260},
+ merguez:{n:"Merguez",p:15,l:24,g:1,r:"Viandes et poissons",fam:"boeuf",max:150},
+ cuisse:{n:"Cuisses de poulet avec os",p:14,l:9,g:0,r:"Viandes et poissons",fam:"volaille",max:420},
+ lardons:{n:"Lardons",p:16,l:16,g:1,r:"Viandes et poissons",fam:"porc",max:80},
+ butternut:{n:"Butternut",p:1,l:0.1,g:8,r:"Fruits et légumes"},
+ coco:{n:"Lait de coco",p:1.5,l:13,g:2.5,r:"Épicerie",max:90},
+ nouilles:{n:"Nouilles de riz",p:6,l:0.6,g:82,r:"Épicerie",max:160}
 };
 /* ---------- Recettes : prot, féculent et gras ajustés ; le reste fixe (portion homme ~2 800 kcal) ---------- */
 const MAINS=[
@@ -321,6 +328,15 @@ const MAINS=[
  {n:"Escalope de dinde, semoule et courgettes à la provençale",how:"Escalope poêlée, courgettes et tomates mijotées à l'huile d'olive.",t:[10,20],st:["Fais revenir courgettes et tomates en dés dans l'huile avec ail et herbes de Provence, 15 min.","Verse de l'eau bouillante salée sur la semoule, couvre 5 min puis égraine.","Poêle les escalopes 3 à 4 min par face.","Sers la dinde sur la semoule avec les légumes."],prot:"dinde",carb:"semoule",fat:"huile",fx:{courgette:150,tomates:80}},
  {n:"Porc sauté aux légumes et riz",how:"Filet mignon en lamelles au wok avec carottes et courgette, sauce soja.",t:[15,15],st:["Lance le riz.","Coupe le filet mignon en fines lamelles.","Saisis-le dans l'huile à feu vif 3 min, réserve.","Fais sauter carottes et courgette 5 min, remets la viande, ajoute la sauce soja 1 min."],prot:"porc",carb:"riz",fat:"huile",fx:{carottes:80,courgette:100,soja:15}}
 ];
+/* Plats pour écouler ce qui dort à la maison : jamais tirés au hasard, placés par stockMeals() quand le stock les permet */
+const STKM=[
+ {n:"Sauté de porc au soja, nouilles de riz et légumes",stockOnly:true,how:"Épaule de porc en fines lamelles saisie à feu vif avec carottes et courgettes, sauce soja, nouilles de riz.",t:[15,15],st:["Décongèle l'épaule la veille au frigo et coupe-la en fines lamelles en retirant le gras épais.","Fais tremper ou cuire les nouilles de riz comme indiqué sur le paquet.","Saisis le porc 4 à 5 min à feu vif dans l'huile, ajoute carottes et courgettes en bâtonnets, 5 min.","Ajoute la sauce soja et les nouilles égouttées, mélange 1 min et sers."],prot:"epaule",carb:"nouilles",fat:"huile",fx:{carottes:100,courgette:120,soja:15}},
+ {n:"Curry de porc au lait de coco et riz",stockOnly:true,how:"Épaule de porc en dés mijotée avec carottes, tomates, curry et lait de coco, servie avec du riz.",t:[10,35],st:["Décongèle l'épaule la veille au frigo, coupe-la en dés en retirant le gras épais.","Lance le riz.","Fais dorer le porc 5 min avec le curry, ajoute les carottes en rondelles et les tomates.","Verse le lait de coco, couvre et laisse mijoter 25 min à feu doux, sers avec le riz."],prot:"epaule",carb:"riz",fat:"coco",fx:{carottes:100,tomates:80}},
+ {n:"Couscous poulet et merguez",stockOnly:true,how:"Poulet et merguez avec carottes, courgettes et coulis épicé, semoule.",t:[15,25],st:["Fais griller les merguez à la poêle 8 à 10 min, réserve-les.","Dans la même poêle, fais dorer le poulet en dés 5 min avec un peu de cumin.","Ajoute carottes et courgettes en morceaux, le coulis et un verre d'eau, laisse mijoter 15 min et remets les merguez.","Prépare la semoule à l'eau bouillante salée, 5 min à couvert, puis égrène."],prot:"poulet",carb:"semoule",fat:null,fx:{merguez:70,carottes:120,courgette:150,coulis:60}},
+ {n:"Cuisses de poulet rôties, pommes de terre et haricots verts",stockOnly:true,how:"Cuisses de poulet au four avec des pommes de terre, haricots verts à côté.",t:[10,45],st:["Décongèle les cuisses la veille au frigo.","Préchauffe le four à 210 °C, coupe les pommes de terre en quartiers et mélange-les avec l'huile, sel et herbes.","Pose les cuisses au milieu, peau vers le haut, et enfourne 40 à 45 min.","Réchauffe les haricots verts et sers."],prot:"cuisse",carb:"pdt",fat:"huile",fx:{hverts:150}},
+ {n:"Pâtes au poulet, lardons et butternut",stockOnly:true,how:"Poulet et lardons poêlés, cubes de butternut fondants, pâtes complètes.",t:[10,20],st:["Lance les pâtes.","Fais revenir les lardons à sec 3 min, ajoute le poulet en dés et fais dorer 5 min.","Ajoute la butternut en cubes et un fond d'eau, couvre 10 min jusqu'à ce qu'elle soit fondante.","Mélange avec les pâtes égouttées et poivre."],prot:"poulet",carb:"pates",fat:null,fx:{lardons:35,butternut:150}},
+ {n:"Poulet au lait de coco, butternut et riz",stockOnly:true,how:"Poulet et butternut mijotés au lait de coco et curry doux, épinards, riz.",t:[10,25],st:["Lance le riz.","Fais dorer le poulet en dés 5 min avec le curry doux.","Ajoute la butternut en cubes, le lait de coco et un petit verre d'eau, laisse mijoter 15 min.","Ajoute les épinards 3 min avant la fin et sers avec le riz."],prot:"poulet",carb:"riz",fat:"coco",fx:{butternut:150,epinards:60}}
+];
 const BKF=[
  {n:"Flocons d'avoine, muesli chocolat et lait",fixedOnly:true,how:"Flocons d'avoine et muesli chocolat au lait Intermarché dans un bol, avec du lait froid ou chaud.",t:[2,0],st:["Verse les flocons d'avoine et le muesli dans un bol.","Ajoute le lait, froid ou chauffé 1 min au micro-ondes."],prot:"avoine",carb:null,fat:null,fx:{muesli:35,lait:250}},
  {n:"Porridge protéiné à la banane",how:"Avoine cuite dans le lait 3 min, whey ajoutée hors du feu, banane en rondelles.",t:[3,4],st:["Fais chauffer l'avoine dans le lait 3 à 4 min en remuant.","Hors du feu, ajoute la whey et mélange bien.","Ajoute la banane en rondelles et le beurre de cacahuète."],prot:"whey",carb:"avoine",fat:"cacahuete",fx:{lait:250,banane:120}},
@@ -341,7 +357,7 @@ const SNK=[
  {n:"Fromage blanc aux fruits rouges et amandes",how:"",t:[2,0],st:["Fruits rouges décongelés dans le fromage blanc, amandes et miel par-dessus."],prot:"fblanc",carb:"frouges",fat:"amandes",fx:{miel:10}}
 ];
 /* Prix moyens en euros par kg (ou par litre), marque distributeur, grande surface, fin 2026. PRB : surgelés et gros paquets */
-const PR={muesli:4.5,bpoulet:13,crevettes:16,poulet:11,dinde:11,boeuf5:10,rumsteck:16,porc:13,jambon:12,saumon:20,thon:12,oeuf:5.5,lentilles:3.5,hrouges:2.5,pchiches:2.5,riz:2,pates:1.5,semoule:2,quinoa:7,pdt:1.5,patdouce:3,painc:4,painburger:5,tortilla:5,avoine:2,lait:1,skyr:4.5,fblanc:2.5,whey:25,emmental:9,creme:4,huile:10,beurre:10,cacahuete:8,amandes:15,avocat:6,pesto:12,choco:10,miel:10,banane:2,pomme:2.5,frouges:6,brocoli:3,hverts:3,courgette:2.5,epinards:2.5,carottes:1.2,tomates:3,champi:5,salade:4,ppois:2.5,coulis:2,soja:6};
+const PR={epaule:7,merguez:11,cuisse:5,lardons:12,butternut:2.5,coco:5,nouilles:5,muesli:4.5,bpoulet:13,crevettes:16,poulet:11,dinde:11,boeuf5:10,rumsteck:16,porc:13,jambon:12,saumon:20,thon:12,oeuf:5.5,lentilles:3.5,hrouges:2.5,pchiches:2.5,riz:2,pates:1.5,semoule:2,quinoa:7,pdt:1.5,patdouce:3,painc:4,painburger:5,tortilla:5,avoine:2,lait:1,skyr:4.5,fblanc:2.5,whey:25,emmental:9,creme:4,huile:10,beurre:10,cacahuete:8,amandes:15,avocat:6,pesto:12,choco:10,miel:10,banane:2,pomme:2.5,frouges:6,brocoli:3,hverts:3,courgette:2.5,epinards:2.5,carottes:1.2,tomates:3,champi:5,salade:4,ppois:2.5,coulis:2,soja:6};
 const PRB={poulet:7.5,dinde:7.5,boeuf5:8,brocoli:2.5,courgette:2.2,champi:4,amandes:12,whey:20};
 function price(k,g){const v=(S.cheap&&PRB[k]!=null?PRB[k]:PR[k])||0;return g/1000*v}
 const euro=x=>x.toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" €";
@@ -367,7 +383,7 @@ function eatsOut(p,date){
 /* ---------- État ---------- */
 function nextMonday(){const d=new Date();d.setHours(12,0,0,0);const k=(8-d.getDay())%7||7;d.setDate(d.getDate()+k);return d.toISOString().slice(0,10)}
 const DEFAULT={
- tab:"jour",week:0,seed:20261116,start:nextMonday(),days:28,excl:["fdm"],v:9,
+ tab:"jour",week:0,seed:20261116,start:nextMonday(),days:28,excl:["fdm"],v:10,
  people:[
   {name:"Anthony",sex:"H",age:22,h:188,w:85,act:2,goal:"recompo",kadj:-300,snack:false,lunch:"home",sweet:false,bkfFixed:"Œufs brouillés, blanc de poulet et tartines",train:[true,true,false,true,true,false,false]},
   {name:"Princesse",sex:"F",age:22,h:160,w:66,goalMin:50,goalMax:60,act:0,goal:"perte",kadj:0,snack:false,lunch:"alt",sweet:true,bkfFixed:"Flocons d'avoine, muesli chocolat et lait",train:[false,false,false,false,false,false,false]}
@@ -406,7 +422,7 @@ function applyRemote(d){
  SHARED.forEach(k=>{if(d[k]!==undefined)S[k]=d[k]});S.checked=d.checked||{};
  if(!S.done)S.done={};if(!S.stock)S.stock={};if(!S.ledger)S.ledger={};
  S.people.forEach((p,i)=>{if(!p.lunch)p.lunch=i===1?"alt":"home";if(p.sweet===undefined)p.sweet=i===1});
- lastPushed=JSON.stringify(sharedState());if(renamePrincess())schedulePush();buildPlan();if(catchUpStock())schedulePush();saveLocal();
+ lastPushed=JSON.stringify(sharedState());if(renamePrincess())schedulePush();buildPlan();if(catchUpStock())schedulePush();if(NEEDSTK){NEEDSTK=false;if(stockMeals())schedulePush()}saveLocal();
  const a=document.activeElement;if(!(a&&(a.tagName==="INPUT"||a.tagName==="SELECT")))render();
 }
 async function subscribe(){
@@ -495,7 +511,7 @@ function portion(rec,T,s,Tb){
  if(!Fa&&C){const now=macrosOf(Object.assign({},items,{[rec.prot]:xp,[rec.carb]:(items[rec.carb]||0)+xc}));const tk=4*T.p+9*T.l+4*T.g;xc=clamp(xc+(tk-now.kcal)/(4*C.g/100+4*C.p/100+9*C.l/100),minC,C.max||400)}
  /* féculent plafonné (pommes de terre, patate douce) : le reste des glucides vient du pain */
  let bread=0;
- if(C&&C.max&&xc>=C.max-1&&rec.carb!=="painc"&&MAINS.includes(rec)){const cur=macrosOf(Object.assign({},items,{[rec.prot]:xp,[rec.carb]:xc}));const miss=T.g-cur.g;if(miss>10)bread=Math.min(120,miss/0.45)}
+ if(C&&C.max&&xc>=C.max-1&&rec.carb!=="painc"&&(MAINS.includes(rec)||STKM.includes(rec))){const cur=macrosOf(Object.assign({},items,{[rec.prot]:xp,[rec.carb]:xc}));const miss=T.g-cur.g;if(miss>10)bread=Math.min(120,miss/0.45)}
  const add=(k,g)=>{let r=roundItem(k,g);if(k===rec.prot&&F[k].pc&&r<F[k].pc)r=F[k].pc;if(r>0)items[k]=(items[k]||0)+r};
  add(rec.prot,xp);if(C)add(rec.carb,xc);if(Fa)add(rec.fat,xf);if(bread>=20)add("painc",bread);
  return items;
@@ -638,7 +654,7 @@ function shuffle(a,r){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.flo
 const POOL={bkf:()=>BKF.filter(x=>!x.fixedOnly),snack:()=>SNK,lunch:()=>MAINS,dinner:()=>MAINS};
 /* anciens noms de plats, pour ne pas perdre les plats changés ou retirés après un renommage */
 const RENAMED={"Dahl de lentilles corail et riz":"Dahl de lentilles corail au poulet","Omelette aux pommes de terre et épinards":"Omelette au jambon, pommes de terre et épinards","Tortillas de bœuf épicé et crudités":"Tortillas de bœuf aux épices douces et crudités","Curry de dinde, riz et poivrons":"Curry de dinde, riz et courgettes"};
-const byName=n=>{n=RENAMED[n]||n;return MAINS.concat(BKF,SNK).find(r=>r.n===n)};
+const byName=n=>{n=RENAMED[n]||n;return MAINS.concat(STKM,BKF,SNK).find(r=>r.n===n)};
 let PLAN=null,BASE=null,PLANWARN="";
 function buildPlan(){
  const r=rng(S.seed);
@@ -764,6 +780,30 @@ function projectedStock(w){
  return st;
 }
 /* besoins de la semaine, sans les jours déjà passés (déjà sortis du stock) */
+/* Place des plats qui utilisent ce qui dort à la maison (épaule, merguez, butternut...) sur les dîners des semaines pas encore achetées, un tous les trois jours au plus */
+const SPEC=["epaule","merguez","cuisse","lardons","butternut","coco","nouilles"];
+function specOf(r){return SPEC.filter(f=>r.prot===f||r.carb===f||r.fat===f||(r.fx&&r.fx[f]))}
+function stockMeals(){
+ if(!PLAN)return 0;const st=stockOf(),from=stockFrom(),end=addDays(S.start,S.days);S.ov=S.ov||{};let n=0,gap=0;const used={};
+ for(let i=0;i<PLAN.length;i++){
+  const d=PLAN[i],key=iso(d.date);
+  if(key<from||isDone(Math.floor(i/7))||(S.ov[key]&&S.ov[key].dinner)||offOf(d.date).includes("dinner"))continue;
+  if(gap>0){gap--;continue}
+  const left=f=>st[f]||0;
+  /* d'abord les plats où le produit qui dort est la viande principale, puis de la variété */
+  const score=r=>(SPEC.includes(r.prot)?2:1)*Math.max(...specOf(r).map(left))/(1+3*(used[r.n]||0));
+  const cands=STKM.filter(r=>ok(r)&&specOf(r).every(f=>left(f)>0)).sort((a,b)=>score(b)-score(a));
+  for(const r of cands){
+   if(PLAN[i-1]&&PLAN[i-1].dinner===r)continue;
+   S.ov[key]=Object.assign({},S.ov[key],{dinner:r.n});resolvePlan();
+   const u=useBetween(from,end);
+   if(specOf(r).every(f=>(u[f]||0)<=left(f)*1.1+1)){n++;gap=2;used[r.n]=(used[r.n]||0)+1;break}
+   delete S.ov[key].dinner;if(!Object.keys(S.ov[key]).length)delete S.ov[key];resolvePlan();
+  }
+ }
+ return n;
+}
+let NEEDSTK=false;
 function needFor(w){
  const a=stockFrom(),tot={};
  for(let i=w*7;i<Math.min(S.days,w*7+7);i++){if(iso(PLAN[i].date)<a)continue;const u=dayUse(i);for(const f in u)tot[f]=(tot[f]||0)+u[f]}
@@ -772,7 +812,10 @@ function needFor(w){
 }
 function toBuy(w){
  const {tot,groups,order}=needFor(w);const st=projectedStock(w);const buy={},have={};
- for(const k in tot){const hv=Math.min(st[k]||0,tot[k]);have[k]=hv;const b=tot[k]-hv;if(b>0.5)buy[k]=b}
+ for(const k in tot){const hv=Math.min(st[k]||0,tot[k]);have[k]=hv;const b=tot[k]-hv;
+  /* fin de paquet : s'il en manque un petit peu, on fait avec ce qu'on a au lieu d'acheter un paquet de plus */
+  const small=hv>0&&(F[k].pc?b<F[k].pc*0.99:b<=Math.min(200,Math.max(60,tot[k]*0.2)));
+  if(b>0.5&&!small)buy[k]=b}
  return {tot,buy,have,groups,order};
 }
 function unitLbl(k){const f=F[k];return f.pc?f.unit[1]:k==="lait"?"ml":"g"}
@@ -1000,6 +1043,7 @@ function viewStock(){
  html+=`<div class="sec"><h2>Le reste à la maison</h2><span class="aside">${ex.length}</span></div><p class="muted small" style="margin:0 2px 8px">Ces produits ne sont pas dans les recettes de l'appli : ils ne sont pas retirés tout seuls.</p>`;
  EXO.forEach(o=>{const xs=ex.filter(x=>(x.o||"Placard")===o).sort((a,b)=>a.n.localeCompare(b.n));if(!xs.length)return;html+=`<div class="sec"><h2>${o}</h2><span class="aside">${xs.length}</span></div><div class="list">${xs.map(x=>`<button class="li" data-a="sheet" data-v="extra:${x.j}"><div class="t"><b>${esc(x.n)}</b></div><div class="v">${esc(x.q||"")}</div>${ic("right").replace("<svg",'<svg class="chev"')}</button>`).join("")}</div>`});
  html+=`<div style="margin-top:12px"><button class="btn line full" data-a="sheet" data-v="extra:new">${ic("plus")}Ajouter un autre produit</button></div>`;
+ html+=`<div style="margin-top:12px"><button class="btn line full" data-a="stkmeals">Caser mon stock dans les menus</button><p class="muted tiny" style="margin:6px 2px 0">Place des dîners avec l'épaule, les merguez, les cuisses, la butternut, le lait de coco ou les nouilles sur les semaines pas encore achetées.</p></div>`;
  html+=`<div class="note" style="margin-top:18px">Le stock est déduit automatiquement des listes de courses. Viande en trop : congèle-la le jour des courses.</div>`;
  if(keys.length)html+=`<div style="margin-top:12px"><button class="btn line danger full" data-a="sheet" data-v="clearstock">Vider le stock</button></div>`;
  return html;
@@ -1171,7 +1215,7 @@ document.addEventListener("click",e=>{
   case "leftovers":S.leftovers=!S.leftovers;refresh(true);break;
   case "regen":S.seed=Math.floor(Math.random()*1e9);S.checked={};S.ov={};lastPushed="";S.sheet=null;refresh(true);break;
   case "cheap":S.cheap=!S.cheap;refresh();break;
-  case "nextplan":{S.start=addDays(S.start,S.days);S.seed=Math.floor(Math.random()*1e9);S.ov={};S._seen={};lastPushed="";DCACHE.clear();buildPlan();const t=todayIdx();S.day=t>=0?t:0;S.week=Math.floor(S.day/7);refresh();window.scrollTo(0,0);break}
+  case "nextplan":{S.start=addDays(S.start,S.days);S.seed=Math.floor(Math.random()*1e9);S.ov={};S._seen={};lastPushed="";DCACHE.clear();buildPlan();stockMeals();const t=todayIdx();S.day=t>=0?t:0;S.week=Math.floor(S.day/7);refresh();window.scrollTo(0,0);break}
   case "ck":{const w=wkKey(S.week);S.checked[w]=S.checked[w]||{};const nv=!S.checked[w][v];S.checked[w][v]=nv;saveLocal();pushChecked(w,v,nv);render();break}
   case "copy":{const {buy,groups}=toBuy(S.week);const txt="Courses semaine "+(S.week+1)+"\n\n"+AISLES.map(o=>{const ks=(groups[o]||[]).filter(k=>buy[k]);return ks.length?o+"\n"+ks.map(k=>"  "+F[k].n+" : "+shopQty(k,buy[k])).join("\n"):""}).filter(Boolean).join("\n\n");copyText(txt,b,"Copiée");break}
   case "validate":{
@@ -1185,6 +1229,7 @@ document.addEventListener("click",e=>{
   case "setoff":case "unoff":{const [i,k]=v.split("|");const key=iso(PLAN[+i].date);S.off=S.off||{};const l=new Set(S.off[key]||[]);if(a==="setoff")l.add(k);else l.delete(k);if(l.size)S.off[key]=[...l];else delete S.off[key];S.sheet=null;refresh();break}
   case "exsave":{const n=$("#exn").value.trim(),q=$("#exq").value.trim(),o=$("#exo").value;S.extra=S.extra||[];if(n){const it={n,q,o};if(v==="new")S.extra.push(it);else S.extra[+v]=it}S.sheet=null;refresh();break}
   case "exdel":{S.extra=(S.extra||[]).filter((x,j)=>j!==+v);S.sheet=null;refresh();break}
+  case "stkmeals":{stockMeals();refresh();S.tab="semaine";render();window.scrollTo(0,0);break}
   case "stkdel":{delete stockOf()[v];S.sheet=null;refresh();break}
   case "addstock":{const k=$("#addk").value,q=fromInput(k,$("#addq").value);if(q>0){const st=stockOf();st[k]=(st[k]||0)+q}S.sheet=null;refresh();break}
   case "clearstock":S.stock={};S.sheet=null;refresh();break;
@@ -1221,7 +1266,7 @@ document.addEventListener("input",e=>{
 });
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&S.sheet)closeSheet();if(e.key==="Enter"&&e.target.id==="wkg"){const b=document.querySelector('[data-a="addw"]');if(b)b.click()}});
 
-const APPV="2026-11-20c";
+const APPV="2026-11-20d";
 /* ---------- Démarrage ---------- */
 if(S.tab==="menus")S.tab="jour";else if(S.tab==="profils")S.tab="moi";
 function renamePrincess(){let ch=false;const p=S.people[1];if(p&&(p.name==="Ma conjointe"||p.name==="Personne 2")){p.name="Princesse";ch=true}
@@ -1249,6 +1294,8 @@ function renamePrincess(){let ch=false;const p=S.people[1];if(p&&(p.name==="Ma c
  if((S.v||0)<8){if(S.people.some(q=>/anthony/i.test(q.name||""))){const ST={"poulet":1221,"dinde":380,"bpoulet":580,"boeuf5":480,"rumsteck":600,"porc":550,"jambon":200,"thon":825,"oeuf":2475,"lentilles":500,"hrouges":147,"riz":1837,"pates":1398,"semoule":335,"quinoa":400,"pdt":1360,"patdouce":800,"painc":460,"tortilla":840,"avoine":535,"lait":3393,"fblanc":650,"whey":1900,"creme":682,"huile":330,"beurre":485,"cacahuete":693,"amandes":303,"avocat":300,"pesto":490,"choco":185,"muesli":585,"miel":20,"banane":480,"pomme":1200,"frouges":872,"brocoli":675,"hverts":1739,"courgette":1225,"epinards":1000,"carottes":1230,"tomates":500,"champi":45,"salade":755,"ppois":2240,"coulis":830,"soja":1500};if(!S.stock)S.stock={};const empty=!Object.keys(S.stock).length;for(const k in ST)if(F[k]&&(empty||S.stock[k]===undefined))S.stock[k]=ST[k];if(S.start==="2026-11-16"){if(!S.done)S.done={};if(!S.ledger)S.ledger={};if(!S.done.w20261116){S.ledger.w20261116={before:{},bought:{}};S.done.w20261116=true}}}S.v=8;ch=true}
  /* version 9 : le stock vaut au matin du 21 novembre et sera déduit chaque jour ; dîner du 21 libre (invités) ; tout le reste de la maison noté à part */
  if((S.v||0)<9){if(S.people.some(q=>/anthony/i.test(q.name||""))&&S.start==="2026-11-16"){const L=(S.ledger||{}).w20261116;if(L&&!Object.keys(L.before||{}).length&&!Object.keys(L.bought||{}).length){S.stock={"poulet":1221,"dinde":1145,"bpoulet":720,"boeuf5":480,"rumsteck":600,"porc":550,"jambon":200,"thon":1120,"oeuf":2915,"lentilles":500,"hrouges":147,"riz":1837,"pates":1688,"semoule":500,"quinoa":400,"pdt":1360,"patdouce":800,"painc":550,"tortilla":840,"avoine":680,"lait":2653,"fblanc":650,"whey":1900,"creme":800,"huile":400,"beurre":495,"cacahuete":693,"amandes":303,"avocat":300,"pesto":490,"choco":185,"muesli":625,"miel":20,"banane":480,"pomme":1500,"frouges":872,"brocoli":675,"hverts":1739,"courgette":1535,"epinards":1000,"carottes":1230,"tomates":600,"champi":230,"salade":755,"ppois":2240,"coulis":980,"soja":1500};S.stockAt="2026-11-21"}S.off=S.off||{};if(!S.off["2026-11-21"])S.off["2026-11-21"]=["dinner"];if(!S.extra||!S.extra.length)S.extra=[{"n": "Petits pois carottes en bocal", "q": "1 kg", "o": "Placard"}, {"n": "Haricots mungo en boîte", "q": "180 g", "o": "Placard"}, {"n": "Épices variées", "q": "", "o": "Placard"}, {"n": "Garam masala", "q": "100 g", "o": "Placard"}, {"n": "Curry", "q": "30 g", "o": "Placard"}, {"n": "Curcuma", "q": "30 g", "o": "Placard"}, {"n": "Massala", "q": "30 g", "o": "Placard"}, {"n": "Fleur de sel", "q": "150 g", "o": "Placard"}, {"n": "Vinaigre balsamique au miel", "q": "", "o": "Placard"}, {"n": "Brioche tranchée", "q": "84 g et 451 g", "o": "Placard"}, {"n": "Pain extra mie", "q": "99 g", "o": "Placard"}, {"n": "Pépites de chocolat", "q": "190 g", "o": "Placard"}, {"n": "Préparation chocolat chaud", "q": "1 kg", "o": "Placard"}, {"n": "Chocolat en poudre Van Houten", "q": "190 g", "o": "Placard"}, {"n": "Cassonade", "q": "750 g", "o": "Placard"}, {"n": "Sucre blanc", "q": "787 g", "o": "Placard"}, {"n": "Farine de blé", "q": "554 g", "o": "Placard"}, {"n": "Pâte à tartiner spéculoos", "q": "556 g", "o": "Placard"}, {"n": "Graines de sésame", "q": "250 g", "o": "Placard"}, {"n": "Prince", "q": "300 g", "o": "Placard"}, {"n": "Cacahuètes", "q": "93 g", "o": "Placard"}, {"n": "Noix de pécan", "q": "125 g", "o": "Placard"}, {"n": "Chocolat blanc", "q": "125 g", "o": "Placard"}, {"n": "Chocolat noir Choko Dej", "q": "373 g", "o": "Placard"}, {"n": "Muesli Bjorg bio", "q": "321 g", "o": "Placard"}, {"n": "Barres de céréales Grany", "q": "8", "o": "Placard"}, {"n": "Kinder Bueno", "q": "1", "o": "Placard"}, {"n": "Bonbons", "q": "630 g", "o": "Placard"}, {"n": "Confiture pomme tatin", "q": "320 g", "o": "Placard"}, {"n": "Extrait de vanille", "q": "15 ml", "o": "Placard"}, {"n": "Arôme vanille", "q": "250 ml", "o": "Placard"}, {"n": "Arôme fleur d'oranger", "q": "206 g", "o": "Placard"}, {"n": "Soupe velouté patate douce", "q": "30 cl", "o": "Placard"}, {"n": "Sauce nuoc mam", "q": "260 g", "o": "Placard"}, {"n": "Sauce teriyaki", "q": "218 g", "o": "Placard"}, {"n": "Sauce soja sucrée", "q": "300 ml", "o": "Placard"}, {"n": "Sauce piment doux", "q": "220 ml", "o": "Placard"}, {"n": "Huile de sésame", "q": "150 ml", "o": "Placard"}, {"n": "Vinaigre de riz", "q": "150 ml", "o": "Placard"}, {"n": "Nouilles de riz épaisses", "q": "600 g", "o": "Placard"}, {"n": "Nouilles de riz fines", "q": "200 g", "o": "Placard"}, {"n": "Cheveux d'ange", "q": "678 g", "o": "Placard"}, {"n": "Perles du Japon", "q": "156 g", "o": "Placard"}, {"n": "Chapelure", "q": "418 g", "o": "Placard"}, {"n": "Pâtes à lasagnes", "q": "176 g et 500 g", "o": "Placard"}, {"n": "Double concentré de tomate", "q": "150 g", "o": "Placard"}, {"n": "Sauce pizza", "q": "780 g", "o": "Placard"}, {"n": "Lait de coco", "q": "20 cl", "o": "Placard"}, {"n": "Lait de coco allégé", "q": "40 cl", "o": "Placard"}, {"n": "Nouilles de konjac", "q": "250 g", "o": "Placard"}, {"n": "Riz de konjac", "q": "250 g", "o": "Placard"}, {"n": "Jus de cranberry", "q": "1 bouteille", "o": "Placard"}, {"n": "Spéculoos", "q": "500 g", "o": "Placard"}, {"n": "Gressins", "q": "125 g", "o": "Placard"}, {"n": "Olives vertes", "q": "700 g", "o": "Placard"}, {"n": "Jus de citron", "q": "211 g", "o": "Frigo"}, {"n": "Moutarde douce", "q": "291 g", "o": "Frigo"}, {"n": "Moutarde à l'ancienne", "q": "289 g", "o": "Frigo"}, {"n": "Ketchup sans sucre", "q": "247 g", "o": "Frigo"}, {"n": "Vinaigre balsamique", "q": "183 g", "o": "Frigo"}, {"n": "Sauce burger", "q": "350 g et 236 g", "o": "Frigo"}, {"n": "Sauce barbecue", "q": "293 g", "o": "Frigo"}, {"n": "Sauce smoky burger", "q": "384 g", "o": "Frigo"}, {"n": "Mayonnaise", "q": "80 g", "o": "Frigo"}, {"n": "Rosette", "q": "59 g", "o": "Frigo"}, {"n": "Poitrine fumée", "q": "120 g", "o": "Frigo"}, {"n": "Pâtes complètes cuites", "q": "170 g", "o": "Frigo"}, {"n": "Fromages à burger", "q": "7", "o": "Frigo"}, {"n": "Parmesan", "q": "60 g", "o": "Frigo"}, {"n": "Kiri", "q": "1", "o": "Frigo"}, {"n": "Demi-tomate", "q": "90 g", "o": "Frigo"}, {"n": "Confiture de fraise", "q": "393 g", "o": "Frigo"}, {"n": "Cornichons", "q": "494 g", "o": "Frigo"}, {"n": "Compotes de pomme", "q": "8", "o": "Frigo"}, {"n": "Petits suisses", "q": "10", "o": "Frigo"}, {"n": "Jus d'orange", "q": "323 g", "o": "Frigo"}, {"n": "Mascarpone", "q": "500 g", "o": "Frigo"}, {"n": "Crème entière 30 %", "q": "38 cl", "o": "Frigo"}, {"n": "Mozzarella", "q": "500 g", "o": "Frigo"}, {"n": "Jambon cru", "q": "200 g", "o": "Frigo"}, {"n": "Roquette", "q": "125 g", "o": "Frigo"}, {"n": "Emmental râpé", "q": "400 g", "o": "Frigo"}, {"n": "Poêlée poulet rôti et pommes de terre", "q": "900 g", "o": "Congélateur"}, {"n": "Butternut en cubes", "q": "1,2 kg", "o": "Congélateur"}, {"n": "Feuilletés chèvre épinards", "q": "2", "o": "Congélateur"}, {"n": "Raviolis fromage", "q": "300 g", "o": "Congélateur"}, {"n": "Raviolis bolognaise", "q": "300 g", "o": "Congélateur"}, {"n": "Lardons de volaille", "q": "150 g", "o": "Congélateur"}, {"n": "Lardons allumettes", "q": "200 g", "o": "Congélateur"}, {"n": "Merguez du boucher", "q": "6", "o": "Congélateur"}, {"n": "Merguez", "q": "220 g", "o": "Congélateur"}, {"n": "Steak haché 15 %", "q": "300 g et 1 kg", "o": "Congélateur"}, {"n": "Épaule de porc", "q": "1 kg", "o": "Congélateur"}, {"n": "Cuisses de poulet", "q": "600 g", "o": "Congélateur"}, {"n": "Croissants", "q": "16 et 6", "o": "Congélateur"}, {"n": "Chocolatines", "q": "8", "o": "Congélateur"}, {"n": "Pain au chocolat", "q": "150 g", "o": "Congélateur"}, {"n": "Purée carottes potiron", "q": "750 g", "o": "Congélateur"}, {"n": "Purée de légumes verts", "q": "750 g", "o": "Congélateur"}, {"n": "Légumes pour potage", "q": "1 kg", "o": "Congélateur"}, {"n": "Julienne de légumes", "q": "378 g", "o": "Congélateur"}, {"n": "Haricots beurre", "q": "627 g", "o": "Congélateur"}, {"n": "Galettes aux petits légumes", "q": "17", "o": "Congélateur"}, {"n": "Pâte brisée", "q": "2", "o": "Congélateur"}, {"n": "Feuilles de brick", "q": "340 g", "o": "Congélateur"}, {"n": "Feuilles de lasagnes", "q": "250 g", "o": "Congélateur"}, {"n": "Frites allumettes", "q": "138 g", "o": "Congélateur"}, {"n": "Pommes dauphines", "q": "310 g", "o": "Congélateur"}, {"n": "Pommes de terre rissolées", "q": "345 g et 284 g", "o": "Congélateur"}, {"n": "Nuggets de poulet", "q": "97 g", "o": "Congélateur"}, {"n": "Glace vanille", "q": "338 g", "o": "Congélateur"}, {"n": "Glace spéculoos vanille", "q": "465 g", "o": "Congélateur"}, {"n": "Clémentines", "q": "18", "o": "Fruits"}]}S.v=9;ch=true}
+ /* version 10 : ce qui dort au congélo et au placard passe dans le stock des recettes, la semaine du 23 est achetée, et des dîners l'utilisent */
+ if((S.v||0)<10){if(S.people.some(q=>/anthony/i.test(q.name||""))&&S.start==="2026-11-16"){const add={epaule:1016,merguez:1120,cuisse:600,lardons:350,butternut:1200,coco:600,nouilles:800};const st=S.stock=S.stock||{};for(const k in add)if(st[k]===undefined)st[k]=add[k];const gone=["Épaule de porc","Merguez du boucher","Merguez","Cuisses de poulet","Lardons de volaille","Lardons allumettes","Butternut en cubes","Lait de coco","Lait de coco allégé","Nouilles de riz épaisses","Nouilles de riz fines"];S.extra=(S.extra||[]).filter(x=>!gone.includes(x.n));S.done=S.done||{};S.ledger=S.ledger||{};if(!S.done.w20261123){S.done.w20261123=true;S.ledger.w20261123={before:{},bought:{}}}NEEDSTK=true}S.v=10;ch=true}
  S.people.forEach(q=>{if(q.bkfFixed===undefined)q.bkfFixed=""});
  return ch}
 renamePrincess();
@@ -1256,6 +1303,7 @@ S.sheet=null;
 if(S.owner!=null&&S.people[S.owner])S.me=S.owner;
 buildPlan();
 if(catchUpStock())save();
+if(NEEDSTK){NEEDSTK=false;stockMeals();save()}
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&catchUpStock()){DCACHE.clear();save();render()}});
 {const t=todayIdx();if(t>=0)S.day=t;else if(S.day==null)S.day=0;S.week=Math.floor((S.day|0)/7)}
 render();
