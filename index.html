@@ -387,7 +387,7 @@ function eatsOut(p,date){
 /* ---------- État ---------- */
 function nextMonday(){const d=new Date();d.setHours(12,0,0,0);const k=(8-d.getDay())%7||7;d.setDate(d.getDate()+k);return d.toISOString().slice(0,10)}
 const DEFAULT={
- tab:"jour",week:0,seed:20261116,start:nextMonday(),days:28,excl:["fdm"],v:11,
+ tab:"jour",week:0,seed:20261116,start:nextMonday(),days:28,excl:["fdm"],v:12,
  people:[
   {name:"Anthony",sex:"H",age:22,h:188,w:85,act:2,goal:"recompo",kadj:-300,snack:false,lunch:"home",sweet:false,bkfFixed:"Œufs brouillés, blanc de poulet et tartines",train:[true,true,false,true,true,false,false]},
   {name:"Princesse",sex:"F",age:22,h:160,w:66,goalMin:50,goalMax:60,act:0,goal:"perte",kadj:0,snack:false,lunch:"alt",sweet:true,bkfFixed:"Flocons d'avoine, muesli chocolat et lait",train:[false,false,false,false,false,false,false]}
@@ -1281,7 +1281,7 @@ document.addEventListener("input",e=>{
 });
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&S.sheet)closeSheet();if(e.key==="Enter"&&e.target.id==="wkg"){const b=document.querySelector('[data-a="addw"]');if(b)b.click()}});
 
-const APPV="2026-11-20g";
+const APPV="2026-11-20h";
 /* ---------- Démarrage ---------- */
 if(S.tab==="menus")S.tab="jour";else if(S.tab==="profils")S.tab="moi";
 function renamePrincess(){let ch=false;const p=S.people[1];if(p&&(p.name==="Ma conjointe"||p.name==="Personne 2")){p.name="Princesse";ch=true}
@@ -1313,6 +1313,8 @@ function renamePrincess(){let ch=false;const p=S.people[1];if(p&&(p.name==="Ma c
  if((S.v||0)<10){if(S.people.some(q=>/anthony/i.test(q.name||""))&&S.start==="2026-11-16"){const add={epaule:1016,merguez:1120,cuisse:600,lardons:350,butternut:1200,coco:600,nouilles:800};const st=S.stock=S.stock||{};for(const k in add)if(st[k]===undefined)st[k]=add[k];const gone=["Épaule de porc","Merguez du boucher","Merguez","Cuisses de poulet","Lardons de volaille","Lardons allumettes","Butternut en cubes","Lait de coco","Lait de coco allégé","Nouilles de riz épaisses","Nouilles de riz fines"];S.extra=(S.extra||[]).filter(x=>!gone.includes(x.n));S.done=S.done||{};S.ledger=S.ledger||{};if(!S.done.w20261123){S.done.w20261123=true;S.ledger.w20261123={before:{},bought:{}}}NEEDSTK=true}S.v=10;ch=true}
  /* version 11 : poids d'emballage retirés (bocaux, boîtes, bouteilles pesés pleins dans l'inventaire du 20 novembre) */
  if((S.v||0)<11){if(S.people.some(q=>/anthony/i.test(q.name||""))&&S.start==="2026-11-16"&&S.stock){const T={hverts:400,hrouges:65,carottes:5,frouges:10,fblanc:25,beurre:15,lait:30,cacahuete:35,coulis:15,soja:550};for(const k in T)if(S.stock[k]!==undefined){const q=S.stock[k]-T[k];if(q>0.5)S.stock[k]=q;else delete S.stock[k]}const W=["Pâte à tartiner spéculoos","Sauce nuoc mam","Sauce teriyaki","Arôme fleur d'oranger","Chocolat noir Choko Dej","Brioche tranchée","Pain extra mie","Perles du Japon","Ketchup sans sucre","Vinaigre balsamique","Sauce barbecue","Sauce smoky burger","Sauce burger","Mayonnaise","Rosette","Jus de citron","Cornichons","Moutarde à l'ancienne","Jus d'orange","Glace vanille","Glace spéculoos vanille","Julienne de légumes","Frites allumettes","Pommes dauphines","Nuggets de poulet","Pommes de terre rissolées","Haricots beurre","Steak haché 15 %"];(S.extra||[]).forEach(x=>{if(W.includes(x.n)&&x.q&&!/emballage/.test(x.q))x.q+=" avec l'emballage"})}S.v=11;ch=true}
+ /* version 12 : les boîtes en métal de l'inventaire étaient déjà en poids net égoutté, on remet ce qui avait été retiré en trop */
+ if((S.v||0)<12){if(S.people.some(q=>/anthony/i.test(q.name||""))&&S.start==="2026-11-16"&&S.stock){const B={hverts:110,hrouges:65};for(const k in B)S.stock[k]=(S.stock[k]||0)+B[k]}S.v=12;ch=true}
  S.people.forEach(q=>{if(q.bkfFixed===undefined)q.bkfFixed=""});
  return ch}
 renamePrincess();
