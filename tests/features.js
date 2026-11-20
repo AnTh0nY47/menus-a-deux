@@ -23,8 +23,10 @@ const V3={tab:"jour",week:0,seed:20261116,start:"2026-11-16",days:30,excl:["fdm"
 (async()=>{
  // 1. migration depuis la version 3
  {const {w,errs}=await boot(V3,"2026-11-18T09:00:00");const S=w.eval("S");
-  check("version 8",S.v===8,S.v);
-  check("migration 8 : stock de la maison rempli une seule fois",w.eval(`(()=>{const b=JSON.stringify(S);S.v=7;S.stock={};S.start="2026-11-16";S.done={};S.ledger={};renamePrincess();const ok=S.stock.pates===1398&&S.stock.oeuf===2475&&S.done.w20261116===true&&S.v===8;S.stock.pates=5;S.v=7;renamePrincess();const keep=S.stock.pates===5;Object.assign(S,JSON.parse(b));return ok&&keep})()`));
+  check("version 9",S.v===9,S.v);
+  check("migrations 8 et 9 : stock de la maison au 21, dîner du 21 libre, reste de la maison noté",w.eval(`(()=>{const b=JSON.stringify(S);S.v=7;S.stock={};S.start="2026-11-16";S.done={};S.ledger={};S.off={};S.extra=[];renamePrincess();const ok=S.stock.pates===1688&&S.stockAt==="2026-11-21"&&S.done.w20261116===true&&S.off["2026-11-21"][0]==="dinner"&&S.extra.length>100&&S.v===9;Object.assign(S,JSON.parse(b));return ok})()`));
+  check("repas libre : ni portions ni courses, le reste du jour ne grossit pas",w.eval(`(()=>{const key=iso(PLAN[3].date);const k0=macrosOf(pd(0,3).lunch||{}).kcal;S.off={[key]:["dinner"]};DCACHE.clear();const d=pd(0,3);const ok=!d.dinner&&d.off.dinner&&!dayUse(3).__x&&macrosOf(d.lunch||{}).kcal<=k0*1.05;S.off={};DCACHE.clear();return ok})()`));
+  check("stock déduit chaque jour passé",w.eval(`(()=>{const b=JSON.stringify({stock:S.stock,stockAt:S.stockAt});const a=iso(PLAN[2].date),c=iso(PLAN[4].date);S.stock={oeuf:5000,riz:5000};S.stockAt=a;const u=useBetween(a,c);const real=todayIso;window.todayIso=()=>c;const ch=catchUpStock();window.todayIso=real;const ok=ch&&S.stockAt===c&&Math.abs(S.stock.oeuf-(5000-(u.oeuf||0)))<1&&(u.oeuf||0)>0;Object.assign(S,JSON.parse(b));return ok})()`));
   check("Anthony : petit déj fixe œufs et blanc de poulet",S.people[0].bkfFixed==="Œufs brouillés, blanc de poulet et tartines",S.people[0].bkfFixed);
   check("petit déj d'Anthony aux quantités exactes tous les jours",w.eval("PLAN.every((d,i)=>{const b=pd(0,i).bkf;return b&&b.oeuf===220&&b.bpoulet===70&&b.painc===45&&b.beurre===5&&b.pomme===150})"));
   check("Princesse garde son petit déj",w.eval("PLAN.every((d,i)=>{const b=pd(1,i).bkf;return b&&b.avoine>0&&b.muesli>0&&!b.oeuf})"));

@@ -367,7 +367,7 @@ function eatsOut(p,date){
 /* ---------- État ---------- */
 function nextMonday(){const d=new Date();d.setHours(12,0,0,0);const k=(8-d.getDay())%7||7;d.setDate(d.getDate()+k);return d.toISOString().slice(0,10)}
 const DEFAULT={
- tab:"jour",week:0,seed:20261116,start:nextMonday(),days:28,excl:["fdm"],v:8,
+ tab:"jour",week:0,seed:20261116,start:nextMonday(),days:28,excl:["fdm"],v:9,
  people:[
   {name:"Anthony",sex:"H",age:22,h:188,w:85,act:2,goal:"recompo",kadj:-300,snack:false,lunch:"home",sweet:false,bkfFixed:"Œufs brouillés, blanc de poulet et tartines",train:[true,true,false,true,true,false,false]},
   {name:"Princesse",sex:"F",age:22,h:160,w:66,goalMin:50,goalMax:60,act:0,goal:"perte",kadj:0,snack:false,lunch:"alt",sweet:true,bkfFixed:"Flocons d'avoine, muesli chocolat et lait",train:[false,false,false,false,false,false,false]}
@@ -384,7 +384,7 @@ function save(){saveLocal();schedulePush()}
 
 /* ---------- Partage entre les deux téléphones (Firestore) ---------- */
 const FB_CONFIG={apiKey:"AIzaSyDoLroXKfWx13eUf1Mmj005AOBkR8adxRs",authDomain:"menu-a-deux.firebaseapp.com",projectId:"menu-a-deux",storageBucket:"menu-a-deux.firebasestorage.app",messagingSenderId:"527837966126",appId:"1:527837966126:web:6fcd0a0eb8e8794c7f54bf"};
-const SHARED=["people","excl","seed","start","days","cheap","stock","done","ledger","v","ov","banned","leftovers"];
+const SHARED=["people","excl","seed","start","days","cheap","stock","done","ledger","v","ov","banned","leftovers","stockAt","off","extra"];
 let db=null,unsub=null,lastPushed="",pushT=null,gotFirst=false,SYNC={state:"off",msg:""};
 function fbReady(){
  if(db)return true;if(!window.firebase)return false;
@@ -406,7 +406,7 @@ function applyRemote(d){
  SHARED.forEach(k=>{if(d[k]!==undefined)S[k]=d[k]});S.checked=d.checked||{};
  if(!S.done)S.done={};if(!S.stock)S.stock={};if(!S.ledger)S.ledger={};
  S.people.forEach((p,i)=>{if(!p.lunch)p.lunch=i===1?"alt":"home";if(p.sweet===undefined)p.sweet=i===1});
- lastPushed=JSON.stringify(sharedState());if(renamePrincess())schedulePush();saveLocal();buildPlan();
+ lastPushed=JSON.stringify(sharedState());if(renamePrincess())schedulePush();buildPlan();if(catchUpStock())schedulePush();saveLocal();
  const a=document.activeElement;if(!(a&&(a.tagName==="INPUT"||a.tagName==="SELECT")))render();
 }
 async function subscribe(){
@@ -529,12 +529,14 @@ function personDay(pi,i){
  const tr=!!p.train[dow(day.date)],out=eatsOut(p,day.date),sh=shares(p.snack),t=dayTarget(p,tr);
  /* sans collation, les trois repas doivent être un peu plus copieux */
  const s=clamp(t.kcal/2800,0.5,1.15),sz=clamp(t.kcal/2800*(p.snack?1:1.12),0.6,1.35);
- const f=out?1-sh.lunch:1;
+ const offK=offOf(day.date);let f=out?1-sh.lunch:1;offK.forEach(k=>{if(sh[k]&&!(k==="lunch"&&out))f-=sh[k]});f=Math.max(f,0.05);
  const T={p:t.P*f,l:t.L*f,g:t.G*f};T.k=4*T.p+9*T.l+4*T.g;
  const res={bkf:null,lunch:null,snack:null,dinner:null,out,tr,target:{kcal:Math.round(t.kcal*f),P:Math.round(T.p),G:Math.round(T.g),L:Math.round(T.l)},recs:{}};
  const meals=[];
  ["bkf","lunch","snack","dinner"].forEach(k=>{
   if(!sh[k])return;if(k==="lunch"&&out){res.recs.lunch=day.lunch;return}
+  /* repas libre (invités, resto) : rien de l'appli ce repas-là, ni portions ni courses */
+  if(offK.includes(k)){res.recs[k]=k==="bkf"||k==="snack"?recFor(p,day,k,i):day[k];res.off=res.off||{};res.off[k]=true;return}
   const rec=k==="bkf"||k==="snack"?recFor(p,day,k,i):day[k];res.recs[k]=rec;
   const kind=k==="bkf"?"bkf":k==="snack"?"snack":"main";
   /* recette verrouillée : quantités exactes, ni mise à l'échelle ni calcul, le reste de la journée s'adapte */
@@ -743,13 +745,33 @@ function wkKey(w){return "w"+addDays(S.start,7*w).replace(/-/g,"")}
 function isDone(w){return !!(S.done||{})[wkKey(w)]}
 function isPast(w){return addDays(S.start,Math.min(S.days-1,7*w+6))<todayIso()}
 function firstOpenWeek(){for(let w=0;w<nWeeks();w++)if(!isDone(w)&&!isPast(w))return w;return nWeeks()}
+/* le stock vaut au matin du jour S.stockAt ; chaque jour passé, ce qui a été mangé ce jour-là en sort */
+function offOf(d){return ((S.off||{})[iso(d)])||[]}
+function dayUse(i){const t={};S.people.forEach((p,pi)=>{const d=pd(pi,i);["bkf","lunch","snack","dinner"].forEach(k=>{const m=d[k];if(m)for(const f in m)t[f]=(t[f]||0)+m[f]})});return t}
+function useBetween(a,b){const t={};if(!PLAN)return t;PLAN.forEach((d,i)=>{const s=iso(d.date);if(s>=a&&s<b){const u=dayUse(i);for(const f in u)t[f]=(t[f]||0)+u[f]}});return t}
+function stockFrom(){return S.stockAt||todayIso()}
+function catchUpStock(){
+ const t=todayIso();if(!PLAN)return false;
+ if(!S.stockAt){S.stockAt=t;return true}
+ if(S.stockAt>=t)return false;
+ const u=useBetween(S.stockAt,t),st=stockOf();
+ for(const k in u){if(st[k]===undefined)continue;const q=st[k]-u[k];if(q>0.5)st[k]=q;else delete st[k]}
+ S.stockAt=t;return true;
+}
 function projectedStock(w){
- const st=Object.assign({},stockOf());
- for(let i=firstOpenWeek();i<w;i++){if(isDone(i))continue;const t=shoppingFor(i).tot;for(const k in st)st[k]=Math.max(0,st[k]-(t[k]||0))}
+ const st=Object.assign({},stockOf()),a=stockFrom(),b=addDays(S.start,7*w);
+ if(b>a){const u=useBetween(a,b);for(const k in st)st[k]=Math.max(0,st[k]-(u[k]||0))}
  return st;
 }
+/* besoins de la semaine, sans les jours déjà passés (déjà sortis du stock) */
+function needFor(w){
+ const a=stockFrom(),tot={};
+ for(let i=w*7;i<Math.min(S.days,w*7+7);i++){if(iso(PLAN[i].date)<a)continue;const u=dayUse(i);for(const f in u)tot[f]=(tot[f]||0)+u[f]}
+ const groups={};for(const k in tot){(groups[F[k].r]=groups[F[k].r]||[]).push(k)}
+ return {tot,groups,order:AISLES};
+}
 function toBuy(w){
- const {tot,groups,order}=shoppingFor(w);const st=projectedStock(w);const buy={},have={};
+ const {tot,groups,order}=needFor(w);const st=projectedStock(w);const buy={},have={};
  for(const k in tot){const hv=Math.min(st[k]||0,tot[k]);have[k]=hv;const b=tot[k]-hv;if(b>0.5)buy[k]=b}
  return {tot,buy,have,groups,order};
 }
@@ -860,11 +882,12 @@ function viewJour(){
  keys.forEach(([k,lab])=>{
   if(S.me==="all"){
    const groups=[];S.people.forEach((p,pi)=>{const d=pd(pi,i);if(!d[k])return;const r=d.recs[k]||day[k];let g=groups.find(x=>x.r===r);if(!g){g={r,who:[],kcal:0};groups.push(g)}g.who.push(pi);g.kcal+=macrosOf(d[k]).kcal});
-   if(!groups.length){cards+=`<div class="meal off"><div class="k">${lab}</div><div class="n">Personne ne mange à la maison</div></div>`;return}
+   if(!groups.length){const off=S.people.some((p,pi)=>{const d=pd(pi,i);return d.off&&d.off[k]});cards+=off?`<button class="meal off" data-a="unoff" data-v="${i}|${k}"><div class="k">${lab}</div><div class="n">Repas libre</div><div class="meta">Rien de l'appli ce repas-là. Touche pour remettre le plat prévu.</div></button>`:`<div class="meal off"><div class="k">${lab}</div><div class="n">Personne ne mange à la maison</div></div>`;return}
    groups.forEach(g=>{cards+=`<button class="meal" data-a="meal" data-v="${i}|${k}|${esc(g.r.n)}"><div class="k">${lab}${groups.length>1?` · ${g.who.map(x=>first(S.people[x])).join(", ")}`:""}</div><div class="n">${esc(g.r.n)}</div><div class="meta">${mealMeta(day,i,k,g.r)}</div><div class="r">${fr(g.kcal)} kcal${ic("right")}</div></button>`});
   }else{
    const d=pd(S.me,i);
    if(k==="lunch"&&d.out){cards+=`<div class="meal off"><div class="k">${lab}</div><div class="n">Midi en entreprise</div></div>`;return}
+   if(d.off&&d.off[k]){cards+=`<button class="meal off" data-a="unoff" data-v="${i}|${k}"><div class="k">${lab}</div><div class="n">Repas libre</div><div class="meta">Touche pour remettre le plat prévu.</div></button>`;return}
    if(!d[k])return;
    const r=d.recs[k]||day[k];
    cards+=`<button class="meal" data-a="meal" data-v="${i}|${k}|${esc(r.n)}"><div class="k">${lab}</div><div class="n">${esc(r.n)}</div><div class="meta">${mealMeta(day,i,k,r)}</div><div class="r">${fr(macrosOf(d[k]).kcal)} kcal${ic("right")}</div></button>`;
@@ -907,7 +930,7 @@ function sheetMeal(o){
  if(k==="lunch"&&day.left)body+=`<div class="note">Ce sont les restes du dîner d'hier soir. Rien à cuisiner, juste à réchauffer.</div>`;
  if(rec.st&&rec.st.length){const t=rec.t||[0,0];body+=`<div><div class="sec"><h2>Recette</h2><span class="aside">${t[0]} min de préparation${t[1]?` · ${t[1]} min de cuisson`:""}</span></div><ol class="steps">${rec.st.map(s=>`<li><span>${esc(s)}</span></li>`).join("")}</ol></div>`}
  if(k==="bkf"&&who.every(pi=>S.people[pi].bkfFixed===rec.n)){body+=`<div class="note" style="margin-top:18px">Petit déjeuner fixe : il revient tous les jours. Pour le changer, va dans Réglages puis le profil.</div>`;return {kicker:`${MLAB[k]} · ${fmtLong(day.date)}`,title:rec.n,body}}
- body+=`<div class="stack" style="margin-top:22px"><button class="btn pri full" data-a="swap" data-v="${i}|${k}">${ic("swap")}Changer de plat</button><div class="grid2"><button class="btn line" data-a="ban" data-v="${i}|${k}">Je n'aime pas</button>${day.ov[k]?`<button class="btn line" data-a="reset" data-v="${i}|${k}">${ic("undo")}Plat prévu</button>`:`<button class="btn line" data-a="close">Fermer</button>`}</div><p class="muted tiny" style="margin:0;text-align:center">« Je n'aime pas » retire ce plat de tous les menus. Tu peux le remettre dans Réglages.</p></div>`;
+ body+=`<div class="stack" style="margin-top:22px"><button class="btn pri full" data-a="swap" data-v="${i}|${k}">${ic("swap")}Changer de plat</button><div class="grid2"><button class="btn line" data-a="ban" data-v="${i}|${k}">Je n'aime pas</button>${day.ov[k]?`<button class="btn line" data-a="reset" data-v="${i}|${k}">${ic("undo")}Plat prévu</button>`:`<button class="btn line" data-a="close">Fermer</button>`}</div>${k==="lunch"||k==="dinner"?`<button class="btn line full" data-a="setoff" data-v="${i}|${k}">Repas libre (invités, resto)</button>`:""}<p class="muted tiny" style="margin:0;text-align:center">« Je n'aime pas » retire ce plat de tous les menus. Tu peux le remettre dans Réglages.</p></div>`;
  return {kicker:`${MLAB[k]} · ${fmtLong(day.date)}`,title:rec.n,body};
 }
 
@@ -968,10 +991,15 @@ function sheetBuy(){
 function viewStock(){
  const st=stockOf(),keys=Object.keys(st).filter(k=>st[k]>0.5);
  let html=`<div style="display:flex;gap:10px;margin:4px 0 6px"><button class="btn pri" style="flex:1" data-a="sheet" data-v="addstock">${ic("plus")}Ajouter au stock</button></div>`;
+ html+=`<p class="muted small" style="margin:6px 2px 0">Quantités au ${S.stockAt&&S.stockAt>todayIso()?"matin du "+fmtLong(new Date(S.stockAt+"T12:00:00")).toLowerCase():"début de la journée"}. Chaque soir, ce que vous avez mangé dans la journée est retiré.</p>`;
  if(!keys.length)html+=`<div class="empty"><b>Le stock est vide</b>Après tes premières courses validées, ce qui reste à la maison apparaîtra ici. Tu peux aussi ajouter ce que tu as déjà dans tes placards.</div>`;
  const groups={};keys.forEach(k=>{(groups[F[k].r]=groups[F[k].r]||[]).push(k)});
  AISLES.forEach(a=>{const ks=(groups[a]||[]).sort((x,y)=>F[x].n.localeCompare(F[y].n));if(!ks.length)return;
   html+=`<div class="sec"><h2>${a}</h2></div><div class="list">${ks.map(k=>`<button class="li" data-a="sheet" data-v="stk:${k}"><div class="t"><b>${esc(F[k].n)}</b></div><div class="v">${stockQty(k,st[k])}</div>${ic("right").replace("<svg",'<svg class="chev"')}</button>`).join("")}</div>`});
+ const EXO=["Placard","Frigo","Congélateur","Fruits"],ex=(S.extra||[]).map((x,j)=>Object.assign({j},x));
+ html+=`<div class="sec"><h2>Le reste à la maison</h2><span class="aside">${ex.length}</span></div><p class="muted small" style="margin:0 2px 8px">Ces produits ne sont pas dans les recettes de l'appli : ils ne sont pas retirés tout seuls.</p>`;
+ EXO.forEach(o=>{const xs=ex.filter(x=>(x.o||"Placard")===o).sort((a,b)=>a.n.localeCompare(b.n));if(!xs.length)return;html+=`<div class="sec"><h2>${o}</h2><span class="aside">${xs.length}</span></div><div class="list">${xs.map(x=>`<button class="li" data-a="sheet" data-v="extra:${x.j}"><div class="t"><b>${esc(x.n)}</b></div><div class="v">${esc(x.q||"")}</div>${ic("right").replace("<svg",'<svg class="chev"')}</button>`).join("")}</div>`});
+ html+=`<div style="margin-top:12px"><button class="btn line full" data-a="sheet" data-v="extra:new">${ic("plus")}Ajouter un autre produit</button></div>`;
  html+=`<div class="note" style="margin-top:18px">Le stock est déduit automatiquement des listes de courses. Viande en trop : congèle-la le jour des courses.</div>`;
  if(keys.length)html+=`<div style="margin-top:12px"><button class="btn line danger full" data-a="sheet" data-v="clearstock">Vider le stock</button></div>`;
  return html;
@@ -979,6 +1007,11 @@ function viewStock(){
 function sheetStock(k){
  const st=stockOf();const f=F[k];const v=st[k]||0;
  return {kicker:"Stock",title:f.n,body:`<label class="field">Quantité à la maison<span class="qty" style="gap:10px"><input id="stkv" type="number" inputmode="decimal" min="0" step="any" style="flex:1;width:auto" value="${f.pc?Math.round(v/f.pc*10)/10:Math.round(v)}"><span>${unitLbl(k)}</span></span></label><button class="btn pri full" data-a="stksave" data-v="${k}">Enregistrer</button><button class="btn line danger full" data-a="stkdel" data-v="${k}">Retirer du stock</button>`};
+}
+function sheetExtra(v){
+ const x=v==="new"?{n:"",q:"",o:"Placard"}:(S.extra||[])[+v]||{n:"",q:"",o:"Placard"};
+ const opts=["Placard","Frigo","Congélateur","Fruits"].map(o=>`<option${(x.o||"Placard")===o?" selected":""}>${o}</option>`).join("");
+ return {kicker:"Stock",title:v==="new"?"Ajouter un produit":x.n,body:`<label class="field">Produit<input id="exn" value="${esc(x.n)}" placeholder="Par exemple sauce soja"></label><label class="field">Quantité<input id="exq" value="${esc(x.q||"")}" placeholder="Par exemple 500 g"></label><label class="field">Où<select id="exo">${opts}</select></label><button class="btn pri full" data-a="exsave" data-v="${v}">Enregistrer</button>${v==="new"?"":`<button class="btn line danger full" data-a="exdel" data-v="${v}">Retirer</button>`}`};
 }
 function sheetAddStock(){
  const opts=Object.keys(F).sort((a,b)=>F[a].n.localeCompare(F[b].n)).map(k=>`<option value="${k}">${esc(F[k].n)}</option>`).join("");
@@ -1094,6 +1127,7 @@ function renderSheet(){
  else if(o.t==="buy")c=sheetBuy();
  else if(o.t==="stk")c=sheetStock(o.k);
  else if(o.t==="addstock")c=sheetAddStock();
+ else if(o.t==="extra")c=sheetExtra(o.v);
  else if(o.t==="prof")c=sheetProfile(o.pi);
  else if(o.t==="sync")c=sheetSync();
  else if(o.t==="excl")c=sheetExcl();
@@ -1110,7 +1144,7 @@ function renderSheet(){
  el.querySelector(".bdy").scrollTop=top;
 }
 function setSync(state,msg){SYNC={state,msg:msg||""};const p=document.getElementById("syncpill");if(p){p.className="sync "+state;p.innerHTML=`<i></i>${state==="ok"?"Synchronisé":state==="err"?"Erreur":state==="wait"?"Connexion":"Partagé"}`}const el=document.getElementById("syncstate");if(el)el.textContent=syncLabel()}
-function refresh(full){DCACHE.clear();if(full)buildPlan();save();render()}
+function refresh(full){DCACHE.clear();if(full)buildPlan();catchUpStock();save();render()}
 function openSheet(o){S.sheet=o;renderSheet()}
 function closeSheet(){S.sheet=null;renderSheet()}
 function fallback(t){const ta=$("#clip");ta.value=t;ta.select();try{document.execCommand("copy")}catch(e){}}
@@ -1133,7 +1167,7 @@ document.addEventListener("click",e=>{
    if(S.sheet&&S.sheet.t==="meal"){const sel=S.sheet.sel!=null?S.sheet.sel:S.me;const pi=sel==="all"?0:+sel;DCACHE.clear();S.sheet.n=(pd(pi,+i).recs[k]||PLAN[+i][k]).n}
    refresh();break}
   case "close":closeSheet();break;
-  case "sheet":{if(v.startsWith("stk:"))openSheet({t:"stk",k:v.slice(4)});else if(v.startsWith("prof:"))openSheet({t:"prof",pi:+v.slice(5)});else openSheet({t:v});break}
+  case "sheet":{if(v.startsWith("extra:"))openSheet({t:"extra",v:v.slice(6)});else if(v.startsWith("stk:"))openSheet({t:"stk",k:v.slice(4)});else if(v.startsWith("prof:"))openSheet({t:"prof",pi:+v.slice(5)});else openSheet({t:v});break}
   case "leftovers":S.leftovers=!S.leftovers;refresh(true);break;
   case "regen":S.seed=Math.floor(Math.random()*1e9);S.checked={};S.ov={};lastPushed="";S.sheet=null;refresh(true);break;
   case "cheap":S.cheap=!S.cheap;refresh();break;
@@ -1141,13 +1175,16 @@ document.addEventListener("click",e=>{
   case "ck":{const w=wkKey(S.week);S.checked[w]=S.checked[w]||{};const nv=!S.checked[w][v];S.checked[w][v]=nv;saveLocal();pushChecked(w,v,nv);render();break}
   case "copy":{const {buy,groups}=toBuy(S.week);const txt="Courses semaine "+(S.week+1)+"\n\n"+AISLES.map(o=>{const ks=(groups[o]||[]).filter(k=>buy[k]);return ks.length?o+"\n"+ks.map(k=>"  "+F[k].n+" : "+shopQty(k,buy[k])).join("\n"):""}).filter(Boolean).join("\n\n");copyText(txt,b,"Copiée");break}
   case "validate":{
-   const w=S.week,st=stockOf(),{tot}=shoppingFor(w),bought={};
+   const w=S.week,st=stockOf(),bought={};
    document.querySelectorAll("[data-bq]").forEach(x=>{bought[x.dataset.bq]=fromInput(x.dataset.bq,x.value)});
    S.ledger[wkKey(w)]={before:Object.assign({},st),bought};
-   new Set([...Object.keys(st),...Object.keys(tot),...Object.keys(bought)]).forEach(k=>{const q=Math.max(0,(st[k]||0)+(bought[k]||0)-(tot[k]||0));if(q>0.5)st[k]=q;else delete st[k]});
+   Object.keys(bought).forEach(k=>{const q=(st[k]||0)+(bought[k]||0);if(q>0.5)st[k]=q});
    S.done[wkKey(w)]=true;S.checked[wkKey(w)]={};lastPushed="";S.sheet=null;refresh();window.scrollTo(0,0);break}
   case "undo":{const key=wkKey(S.week);if(S.ledger[key]){S.stock=S.ledger[key].before;delete S.ledger[key]}delete S.done[key];refresh();break}
   case "stksave":{const q=fromInput(v,$("#stkv").value),st=stockOf();if(q>0.5)st[v]=q;else delete st[v];S.sheet=null;refresh();break}
+  case "setoff":case "unoff":{const [i,k]=v.split("|");const key=iso(PLAN[+i].date);S.off=S.off||{};const l=new Set(S.off[key]||[]);if(a==="setoff")l.add(k);else l.delete(k);if(l.size)S.off[key]=[...l];else delete S.off[key];S.sheet=null;refresh();break}
+  case "exsave":{const n=$("#exn").value.trim(),q=$("#exq").value.trim(),o=$("#exo").value;S.extra=S.extra||[];if(n){const it={n,q,o};if(v==="new")S.extra.push(it);else S.extra[+v]=it}S.sheet=null;refresh();break}
+  case "exdel":{S.extra=(S.extra||[]).filter((x,j)=>j!==+v);S.sheet=null;refresh();break}
   case "stkdel":{delete stockOf()[v];S.sheet=null;refresh();break}
   case "addstock":{const k=$("#addk").value,q=fromInput(k,$("#addq").value);if(q>0){const st=stockOf();st[k]=(st[k]||0)+q}S.sheet=null;refresh();break}
   case "clearstock":S.stock={};S.sheet=null;refresh();break;
@@ -1184,7 +1221,7 @@ document.addEventListener("input",e=>{
 });
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&S.sheet)closeSheet();if(e.key==="Enter"&&e.target.id==="wkg"){const b=document.querySelector('[data-a="addw"]');if(b)b.click()}});
 
-const APPV="2026-11-20b";
+const APPV="2026-11-20c";
 /* ---------- Démarrage ---------- */
 if(S.tab==="menus")S.tab="jour";else if(S.tab==="profils")S.tab="moi";
 function renamePrincess(){let ch=false;const p=S.people[1];if(p&&(p.name==="Ma conjointe"||p.name==="Personne 2")){p.name="Princesse";ch=true}
@@ -1210,12 +1247,16 @@ function renamePrincess(){let ch=false;const p=S.people[1];if(p&&(p.name==="Ma c
  if((S.v||0)<7){const a=S.people.find(q=>/anthony/i.test(q.name||""));if(a)a.bkfFixed="Œufs brouillés, blanc de poulet et tartines";S.v=7;ch=true}
  /* version 8 : stock réel de la maison au lundi 23 novembre (placards, frigo, congélateur et drive du 20, repas du 20 au 22 déduits). Les pâtes comptent les pâtes complètes, pas les cheveux d'ange */
  if((S.v||0)<8){if(S.people.some(q=>/anthony/i.test(q.name||""))){const ST={"poulet":1221,"dinde":380,"bpoulet":580,"boeuf5":480,"rumsteck":600,"porc":550,"jambon":200,"thon":825,"oeuf":2475,"lentilles":500,"hrouges":147,"riz":1837,"pates":1398,"semoule":335,"quinoa":400,"pdt":1360,"patdouce":800,"painc":460,"tortilla":840,"avoine":535,"lait":3393,"fblanc":650,"whey":1900,"creme":682,"huile":330,"beurre":485,"cacahuete":693,"amandes":303,"avocat":300,"pesto":490,"choco":185,"muesli":585,"miel":20,"banane":480,"pomme":1200,"frouges":872,"brocoli":675,"hverts":1739,"courgette":1225,"epinards":1000,"carottes":1230,"tomates":500,"champi":45,"salade":755,"ppois":2240,"coulis":830,"soja":1500};if(!S.stock)S.stock={};const empty=!Object.keys(S.stock).length;for(const k in ST)if(F[k]&&(empty||S.stock[k]===undefined))S.stock[k]=ST[k];if(S.start==="2026-11-16"){if(!S.done)S.done={};if(!S.ledger)S.ledger={};if(!S.done.w20261116){S.ledger.w20261116={before:{},bought:{}};S.done.w20261116=true}}}S.v=8;ch=true}
+ /* version 9 : le stock vaut au matin du 21 novembre et sera déduit chaque jour ; dîner du 21 libre (invités) ; tout le reste de la maison noté à part */
+ if((S.v||0)<9){if(S.people.some(q=>/anthony/i.test(q.name||""))&&S.start==="2026-11-16"){const L=(S.ledger||{}).w20261116;if(L&&!Object.keys(L.before||{}).length&&!Object.keys(L.bought||{}).length){S.stock={"poulet":1221,"dinde":1145,"bpoulet":720,"boeuf5":480,"rumsteck":600,"porc":550,"jambon":200,"thon":1120,"oeuf":2915,"lentilles":500,"hrouges":147,"riz":1837,"pates":1688,"semoule":500,"quinoa":400,"pdt":1360,"patdouce":800,"painc":550,"tortilla":840,"avoine":680,"lait":2653,"fblanc":650,"whey":1900,"creme":800,"huile":400,"beurre":495,"cacahuete":693,"amandes":303,"avocat":300,"pesto":490,"choco":185,"muesli":625,"miel":20,"banane":480,"pomme":1500,"frouges":872,"brocoli":675,"hverts":1739,"courgette":1535,"epinards":1000,"carottes":1230,"tomates":600,"champi":230,"salade":755,"ppois":2240,"coulis":980,"soja":1500};S.stockAt="2026-11-21"}S.off=S.off||{};if(!S.off["2026-11-21"])S.off["2026-11-21"]=["dinner"];if(!S.extra||!S.extra.length)S.extra=[{"n": "Petits pois carottes en bocal", "q": "1 kg", "o": "Placard"}, {"n": "Haricots mungo en boîte", "q": "180 g", "o": "Placard"}, {"n": "Épices variées", "q": "", "o": "Placard"}, {"n": "Garam masala", "q": "100 g", "o": "Placard"}, {"n": "Curry", "q": "30 g", "o": "Placard"}, {"n": "Curcuma", "q": "30 g", "o": "Placard"}, {"n": "Massala", "q": "30 g", "o": "Placard"}, {"n": "Fleur de sel", "q": "150 g", "o": "Placard"}, {"n": "Vinaigre balsamique au miel", "q": "", "o": "Placard"}, {"n": "Brioche tranchée", "q": "84 g et 451 g", "o": "Placard"}, {"n": "Pain extra mie", "q": "99 g", "o": "Placard"}, {"n": "Pépites de chocolat", "q": "190 g", "o": "Placard"}, {"n": "Préparation chocolat chaud", "q": "1 kg", "o": "Placard"}, {"n": "Chocolat en poudre Van Houten", "q": "190 g", "o": "Placard"}, {"n": "Cassonade", "q": "750 g", "o": "Placard"}, {"n": "Sucre blanc", "q": "787 g", "o": "Placard"}, {"n": "Farine de blé", "q": "554 g", "o": "Placard"}, {"n": "Pâte à tartiner spéculoos", "q": "556 g", "o": "Placard"}, {"n": "Graines de sésame", "q": "250 g", "o": "Placard"}, {"n": "Prince", "q": "300 g", "o": "Placard"}, {"n": "Cacahuètes", "q": "93 g", "o": "Placard"}, {"n": "Noix de pécan", "q": "125 g", "o": "Placard"}, {"n": "Chocolat blanc", "q": "125 g", "o": "Placard"}, {"n": "Chocolat noir Choko Dej", "q": "373 g", "o": "Placard"}, {"n": "Muesli Bjorg bio", "q": "321 g", "o": "Placard"}, {"n": "Barres de céréales Grany", "q": "8", "o": "Placard"}, {"n": "Kinder Bueno", "q": "1", "o": "Placard"}, {"n": "Bonbons", "q": "630 g", "o": "Placard"}, {"n": "Confiture pomme tatin", "q": "320 g", "o": "Placard"}, {"n": "Extrait de vanille", "q": "15 ml", "o": "Placard"}, {"n": "Arôme vanille", "q": "250 ml", "o": "Placard"}, {"n": "Arôme fleur d'oranger", "q": "206 g", "o": "Placard"}, {"n": "Soupe velouté patate douce", "q": "30 cl", "o": "Placard"}, {"n": "Sauce nuoc mam", "q": "260 g", "o": "Placard"}, {"n": "Sauce teriyaki", "q": "218 g", "o": "Placard"}, {"n": "Sauce soja sucrée", "q": "300 ml", "o": "Placard"}, {"n": "Sauce piment doux", "q": "220 ml", "o": "Placard"}, {"n": "Huile de sésame", "q": "150 ml", "o": "Placard"}, {"n": "Vinaigre de riz", "q": "150 ml", "o": "Placard"}, {"n": "Nouilles de riz épaisses", "q": "600 g", "o": "Placard"}, {"n": "Nouilles de riz fines", "q": "200 g", "o": "Placard"}, {"n": "Cheveux d'ange", "q": "678 g", "o": "Placard"}, {"n": "Perles du Japon", "q": "156 g", "o": "Placard"}, {"n": "Chapelure", "q": "418 g", "o": "Placard"}, {"n": "Pâtes à lasagnes", "q": "176 g et 500 g", "o": "Placard"}, {"n": "Double concentré de tomate", "q": "150 g", "o": "Placard"}, {"n": "Sauce pizza", "q": "780 g", "o": "Placard"}, {"n": "Lait de coco", "q": "20 cl", "o": "Placard"}, {"n": "Lait de coco allégé", "q": "40 cl", "o": "Placard"}, {"n": "Nouilles de konjac", "q": "250 g", "o": "Placard"}, {"n": "Riz de konjac", "q": "250 g", "o": "Placard"}, {"n": "Jus de cranberry", "q": "1 bouteille", "o": "Placard"}, {"n": "Spéculoos", "q": "500 g", "o": "Placard"}, {"n": "Gressins", "q": "125 g", "o": "Placard"}, {"n": "Olives vertes", "q": "700 g", "o": "Placard"}, {"n": "Jus de citron", "q": "211 g", "o": "Frigo"}, {"n": "Moutarde douce", "q": "291 g", "o": "Frigo"}, {"n": "Moutarde à l'ancienne", "q": "289 g", "o": "Frigo"}, {"n": "Ketchup sans sucre", "q": "247 g", "o": "Frigo"}, {"n": "Vinaigre balsamique", "q": "183 g", "o": "Frigo"}, {"n": "Sauce burger", "q": "350 g et 236 g", "o": "Frigo"}, {"n": "Sauce barbecue", "q": "293 g", "o": "Frigo"}, {"n": "Sauce smoky burger", "q": "384 g", "o": "Frigo"}, {"n": "Mayonnaise", "q": "80 g", "o": "Frigo"}, {"n": "Rosette", "q": "59 g", "o": "Frigo"}, {"n": "Poitrine fumée", "q": "120 g", "o": "Frigo"}, {"n": "Pâtes complètes cuites", "q": "170 g", "o": "Frigo"}, {"n": "Fromages à burger", "q": "7", "o": "Frigo"}, {"n": "Parmesan", "q": "60 g", "o": "Frigo"}, {"n": "Kiri", "q": "1", "o": "Frigo"}, {"n": "Demi-tomate", "q": "90 g", "o": "Frigo"}, {"n": "Confiture de fraise", "q": "393 g", "o": "Frigo"}, {"n": "Cornichons", "q": "494 g", "o": "Frigo"}, {"n": "Compotes de pomme", "q": "8", "o": "Frigo"}, {"n": "Petits suisses", "q": "10", "o": "Frigo"}, {"n": "Jus d'orange", "q": "323 g", "o": "Frigo"}, {"n": "Mascarpone", "q": "500 g", "o": "Frigo"}, {"n": "Crème entière 30 %", "q": "38 cl", "o": "Frigo"}, {"n": "Mozzarella", "q": "500 g", "o": "Frigo"}, {"n": "Jambon cru", "q": "200 g", "o": "Frigo"}, {"n": "Roquette", "q": "125 g", "o": "Frigo"}, {"n": "Emmental râpé", "q": "400 g", "o": "Frigo"}, {"n": "Poêlée poulet rôti et pommes de terre", "q": "900 g", "o": "Congélateur"}, {"n": "Butternut en cubes", "q": "1,2 kg", "o": "Congélateur"}, {"n": "Feuilletés chèvre épinards", "q": "2", "o": "Congélateur"}, {"n": "Raviolis fromage", "q": "300 g", "o": "Congélateur"}, {"n": "Raviolis bolognaise", "q": "300 g", "o": "Congélateur"}, {"n": "Lardons de volaille", "q": "150 g", "o": "Congélateur"}, {"n": "Lardons allumettes", "q": "200 g", "o": "Congélateur"}, {"n": "Merguez du boucher", "q": "6", "o": "Congélateur"}, {"n": "Merguez", "q": "220 g", "o": "Congélateur"}, {"n": "Steak haché 15 %", "q": "300 g et 1 kg", "o": "Congélateur"}, {"n": "Épaule de porc", "q": "1 kg", "o": "Congélateur"}, {"n": "Cuisses de poulet", "q": "600 g", "o": "Congélateur"}, {"n": "Croissants", "q": "16 et 6", "o": "Congélateur"}, {"n": "Chocolatines", "q": "8", "o": "Congélateur"}, {"n": "Pain au chocolat", "q": "150 g", "o": "Congélateur"}, {"n": "Purée carottes potiron", "q": "750 g", "o": "Congélateur"}, {"n": "Purée de légumes verts", "q": "750 g", "o": "Congélateur"}, {"n": "Légumes pour potage", "q": "1 kg", "o": "Congélateur"}, {"n": "Julienne de légumes", "q": "378 g", "o": "Congélateur"}, {"n": "Haricots beurre", "q": "627 g", "o": "Congélateur"}, {"n": "Galettes aux petits légumes", "q": "17", "o": "Congélateur"}, {"n": "Pâte brisée", "q": "2", "o": "Congélateur"}, {"n": "Feuilles de brick", "q": "340 g", "o": "Congélateur"}, {"n": "Feuilles de lasagnes", "q": "250 g", "o": "Congélateur"}, {"n": "Frites allumettes", "q": "138 g", "o": "Congélateur"}, {"n": "Pommes dauphines", "q": "310 g", "o": "Congélateur"}, {"n": "Pommes de terre rissolées", "q": "345 g et 284 g", "o": "Congélateur"}, {"n": "Nuggets de poulet", "q": "97 g", "o": "Congélateur"}, {"n": "Glace vanille", "q": "338 g", "o": "Congélateur"}, {"n": "Glace spéculoos vanille", "q": "465 g", "o": "Congélateur"}, {"n": "Clémentines", "q": "18", "o": "Fruits"}]}S.v=9;ch=true}
  S.people.forEach(q=>{if(q.bkfFixed===undefined)q.bkfFixed=""});
  return ch}
 renamePrincess();
 S.sheet=null;
 if(S.owner!=null&&S.people[S.owner])S.me=S.owner;
 buildPlan();
+if(catchUpStock())save();
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&catchUpStock()){DCACHE.clear();save();render()}});
 {const t=todayIdx();if(t>=0)S.day=t;else if(S.day==null)S.day=0;S.week=Math.floor((S.day|0)/7)}
 render();
 if(S.owner==null)openSheet({t:"who"});
