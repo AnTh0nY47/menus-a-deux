@@ -367,7 +367,7 @@ function eatsOut(p,date){
 /* ---------- État ---------- */
 function nextMonday(){const d=new Date();d.setHours(12,0,0,0);const k=(8-d.getDay())%7||7;d.setDate(d.getDate()+k);return d.toISOString().slice(0,10)}
 const DEFAULT={
- tab:"jour",week:0,seed:20261116,start:nextMonday(),days:28,excl:["fdm"],v:7,
+ tab:"jour",week:0,seed:20261116,start:nextMonday(),days:28,excl:["fdm"],v:8,
  people:[
   {name:"Anthony",sex:"H",age:22,h:188,w:85,act:2,goal:"recompo",kadj:-300,snack:false,lunch:"home",sweet:false,bkfFixed:"Œufs brouillés, blanc de poulet et tartines",train:[true,true,false,true,true,false,false]},
   {name:"Princesse",sex:"F",age:22,h:160,w:66,goalMin:50,goalMax:60,act:0,goal:"perte",kadj:0,snack:false,lunch:"alt",sweet:true,bkfFixed:"Flocons d'avoine, muesli chocolat et lait",train:[false,false,false,false,false,false,false]}
@@ -1184,7 +1184,7 @@ document.addEventListener("input",e=>{
 });
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&S.sheet)closeSheet();if(e.key==="Enter"&&e.target.id==="wkg"){const b=document.querySelector('[data-a="addw"]');if(b)b.click()}});
 
-const APPV="2026-11-20a";
+const APPV="2026-11-20b";
 /* ---------- Démarrage ---------- */
 if(S.tab==="menus")S.tab="jour";else if(S.tab==="profils")S.tab="moi";
 function renamePrincess(){let ch=false;const p=S.people[1];if(p&&(p.name==="Ma conjointe"||p.name==="Personne 2")){p.name="Princesse";ch=true}
@@ -1208,6 +1208,8 @@ function renamePrincess(){let ch=false;const p=S.people[1];if(p&&(p.name==="Ma c
   S.v=6;ch=true}
  /* version 7 : Anthony veut tous les jours 4 œufs, 2 tranches de blanc de poulet et 45 g de pain le matin */
  if((S.v||0)<7){const a=S.people.find(q=>/anthony/i.test(q.name||""));if(a)a.bkfFixed="Œufs brouillés, blanc de poulet et tartines";S.v=7;ch=true}
+ /* version 8 : stock réel de la maison au lundi 23 novembre (placards, frigo, congélateur et drive du 20, repas du 20 au 22 déduits). Les pâtes comptent les pâtes complètes, pas les cheveux d'ange */
+ if((S.v||0)<8){if(S.people.some(q=>/anthony/i.test(q.name||""))){const ST={"poulet":1221,"dinde":380,"bpoulet":580,"boeuf5":480,"rumsteck":600,"porc":550,"jambon":200,"thon":825,"oeuf":2475,"lentilles":500,"hrouges":147,"riz":1837,"pates":1398,"semoule":335,"quinoa":400,"pdt":1360,"patdouce":800,"painc":460,"tortilla":840,"avoine":535,"lait":3393,"fblanc":650,"whey":1900,"creme":682,"huile":330,"beurre":485,"cacahuete":693,"amandes":303,"avocat":300,"pesto":490,"choco":185,"muesli":585,"miel":20,"banane":480,"pomme":1200,"frouges":872,"brocoli":675,"hverts":1739,"courgette":1225,"epinards":1000,"carottes":1230,"tomates":500,"champi":45,"salade":755,"ppois":2240,"coulis":830,"soja":1500};if(!S.stock)S.stock={};const empty=!Object.keys(S.stock).length;for(const k in ST)if(F[k]&&(empty||S.stock[k]===undefined))S.stock[k]=ST[k];if(S.start==="2026-11-16"){if(!S.done)S.done={};if(!S.ledger)S.ledger={};if(!S.done.w20261116){S.ledger.w20261116={before:{},bought:{}};S.done.w20261116=true}}}S.v=8;ch=true}
  S.people.forEach(q=>{if(q.bkfFixed===undefined)q.bkfFixed=""});
  return ch}
 renamePrincess();

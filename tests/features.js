@@ -23,7 +23,8 @@ const V3={tab:"jour",week:0,seed:20261116,start:"2026-11-16",days:30,excl:["fdm"
 (async()=>{
  // 1. migration depuis la version 3
  {const {w,errs}=await boot(V3,"2026-11-18T09:00:00");const S=w.eval("S");
-  check("version 7",S.v===7,S.v);
+  check("version 8",S.v===8,S.v);
+  check("migration 8 : stock de la maison rempli une seule fois",w.eval(`(()=>{const b=JSON.stringify(S);S.v=7;S.stock={};S.start="2026-11-16";S.done={};S.ledger={};renamePrincess();const ok=S.stock.pates===1398&&S.stock.oeuf===2475&&S.done.w20261116===true&&S.v===8;S.stock.pates=5;S.v=7;renamePrincess();const keep=S.stock.pates===5;Object.assign(S,JSON.parse(b));return ok&&keep})()`));
   check("Anthony : petit déj fixe œufs et blanc de poulet",S.people[0].bkfFixed==="Œufs brouillés, blanc de poulet et tartines",S.people[0].bkfFixed);
   check("petit déj d'Anthony aux quantités exactes tous les jours",w.eval("PLAN.every((d,i)=>{const b=pd(0,i).bkf;return b&&b.oeuf===220&&b.bpoulet===70&&b.painc===45&&b.beurre===5&&b.pomme===150})"));
   check("Princesse garde son petit déj",w.eval("PLAN.every((d,i)=>{const b=pd(1,i).bkf;return b&&b.avoine>0&&b.muesli>0&&!b.oeuf})"));
