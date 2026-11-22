@@ -339,8 +339,8 @@ const STKM=[
  {n:"Poulet au lait de coco, butternut et riz",stockOnly:true,how:"Poulet et butternut mijotés au lait de coco et curry doux, épinards, riz.",t:[10,25],st:["Lance le riz.","Fais dorer le poulet en dés 5 min avec le curry doux.","Ajoute la butternut en cubes, le lait de coco et un petit verre d'eau, laisse mijoter 15 min.","Ajoute les épinards 3 min avant la fin et sers avec le riz."],prot:"poulet",carb:"riz",fat:"coco",fx:{butternut:150,epinards:60}}
 ];
 const BKF=[
- /* flocons et lait bornés ensemble : jamais plus d'1 g de flocons pour 3,6 ml de lait, sinon le bol devient pâteux */
- {n:"Flocons d'avoine, muesli chocolat et lait",fixedOnly:true,how:"Flocons d'avoine et muesli chocolat au lait Intermarché dans un bol, avec du lait froid ou chaud.",t:[2,0],st:["Verse les flocons d'avoine et le muesli dans un bol.","Ajoute le lait, froid ou chauffé 1 min au micro-ondes."],prot:"avoine",carb:null,fat:null,lim:{avoine:[30,50]},fx:{},xv:[{f:"muesli",lo:20,hi:40},{f:"lait",lo:180,hi:260}]},
+ /* moitié flocons, moitié muesli, et assez de lait pour que le bol ne soit pas pâteux */
+ {n:"Flocons d'avoine, muesli chocolat et lait",fixedOnly:true,how:"Flocons d'avoine et muesli chocolat au lait Intermarché dans un bol, avec du lait froid ou chaud.",t:[2,0],st:["Verse les flocons d'avoine et le muesli dans un bol.","Ajoute le lait, froid ou chauffé 1 min au micro-ondes."],prot:"avoine",carb:null,fat:null,lim:{avoine:[25,40]},same:["avoine","muesli"],fx:{},xv:[{f:"muesli",lo:25,hi:40},{f:"lait",lo:180,hi:260}]},
  {n:"Porridge protéiné à la banane",how:"Avoine cuite dans le lait 3 min, whey ajoutée hors du feu, banane en rondelles.",t:[3,4],st:["Fais chauffer l'avoine dans le lait 3 à 4 min en remuant.","Hors du feu, ajoute la whey et mélange bien.","Ajoute la banane en rondelles et le beurre de cacahuète."],prot:"whey",carb:"avoine",fat:"cacahuete",fx:{lait:250,banane:120}},
  /* petit déjeuner d'Anthony, quantités fixées par lui : jamais recalculées */
  {n:"Œufs brouillés, blanc de poulet et tartines",fixedOnly:true,lock:true,sale:true,how:"4 œufs brouillés au beurre, 2 tranches de blanc de poulet, pain complet grillé et une pomme.",t:[3,5],st:["Fais griller le pain.","Bats les 4 œufs et cuis-les à feu doux dans le beurre en remuant, 3 min.","Sers avec les 2 tranches de blanc de poulet et la pomme."],prot:null,carb:null,fat:null,fx:{oeuf:220,bpoulet:70,painc:45,beurre:5,pomme:150}},
@@ -637,6 +637,8 @@ function personDay(pi,i){
   if(!best)break;
   const {m,v}=best.c,it=res[m.k];it[v.food]=(m.fixed[v.food]||0)+best.nv;if(!(it[v.food]>0))delete it[v.food];
  }
+ /* moitié-moitié imposé (ex. flocons et muesli de la Princesse) : même poids total, partagé en deux */
+ meals.forEach(m=>{const sm=m.rec.same;const it=res[m.k];if(!sm||!it)return;const t=(it[sm[0]]||0)+(it[sm[1]]||0);const h=Math.round(t/10)*5;if(h>0){it[sm[0]]=h;it[sm[1]]=h}});
  return res;
 }
 const DCACHE=new Map();
@@ -1282,7 +1284,7 @@ document.addEventListener("input",e=>{
 });
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&S.sheet)closeSheet();if(e.key==="Enter"&&e.target.id==="wkg"){const b=document.querySelector('[data-a="addw"]');if(b)b.click()}});
 
-const APPV="2026-11-22c";
+const APPV="2026-11-22d";
 /* ---------- Démarrage ---------- */
 if(S.tab==="menus")S.tab="jour";else if(S.tab==="profils")S.tab="moi";
 function renamePrincess(){let ch=false;const p=S.people[1];if(p&&(p.name==="Ma conjointe"||p.name==="Personne 2")){p.name="Princesse";ch=true}
