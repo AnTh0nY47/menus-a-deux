@@ -16,21 +16,27 @@ Le midi et le soir gardent chacun leur part de protéines, de lipides et de gluc
 
 Si les portions paraissent trop copieuses ou trop légères, le réglage Quantités du profil enlève ou ajoute des calories chaque jour, sans toucher aux protéines. Anthony est à 300 kcal de moins par jour.
 
-Le petit déjeuner peut être fixé dans le profil. Celui d'Anthony est verrouillé à ses quantités : 4 œufs brouillés, 2 tranches de blanc de poulet, 45 g de pain complet, 5 g de beurre et une pomme. Le midi et le soir s'adaptent autour.
+Le petit déjeuner peut être fixé dans le profil. Celui d'Anthony est verrouillé à ses quantités : 4 œufs brouillés, 2 tranches de blanc de poulet, 45 g de pain complet, 5 g de beurre et une pomme. Le midi et le soir s'adaptent autour. Celui de Princesse est un bol moitié flocons d'avoine, moitié muesli chocolat au lait Chabrior, avec entre 180 et 260 ml de lait pour qu'il ne soit jamais pâteux.
 
 Un plat qui ne plaît pas se change d'un appui, ou se retire pour de bon avec Je n'aime pas. Les plats retirés se remettent depuis Réglages.
-
-Le petit déjeuner peut être fixe pour une personne. Princesse a toujours flocons d'avoine, muesli chocolat au lait Chabrior et lait.
 
 L'option Restes du dîner le midi prévoit le dîner en double pour le lendemain midi en semaine. Le soir, l'appli donne les quantités totales à cuisiner, boîtes comprises.
 
 Le calendrier d'alternance est pris en compte : les jours en entreprise, pas de repas du midi pour la personne concernée.
+
+Un midi ou un soir peut passer en repas libre, pour des invités ou un resto, depuis la fiche du plat. Ce repas ne compte plus ni dans les portions ni dans les courses, et le reste de la journée ne grossit pas pour compenser. Si le dîner d'un soir est libre, le plat prévu en restes le lendemain midi est simplement à cuisiner ce jour là.
 
 À la fin des quatre semaines, l'appli propose de préparer les suivantes. Le stock et les courses validées sont gardés.
 
 ## Courses et stock
 
 L'onglet Courses donne la liste de la semaine pour les deux, rangée par rayon, avec une estimation du prix. Après les courses, on appuie sur J'ai fait les courses et on corrige les quantités vraiment achetées. Le surplus part dans le stock et n'apparaît plus dans les listes suivantes tant qu'il en reste.
+
+Le stock baisse tout seul : chaque matin, ce que les menus prévoyaient la veille en est retiré. Quand il ne manque qu'une fin de paquet, moins de 20 % du besoin et jamais plus de 200 g, l'appli considère qu'on fait avec et ne l'ajoute pas aux courses.
+
+Les produits qui ne servent dans aucune recette, sauces, épices, surgelés tout prêts, sont notés à part dans Le reste à la maison. Ils ne baissent pas tout seuls, on corrige à la main.
+
+Pour ne pas laisser dormir ce qu'on a au congélateur, quelques plats existent uniquement pour l'écouler : épaule de porc, merguez, cuisses de poulet, lardons, butternut, lait de coco et nouilles de riz. Tant qu'il en reste, l'appli les place sur des dîners des semaines pas encore achetées, un tous les trois jours au plus. Le bouton Caser mon stock dans les menus refait ce placement à la demande.
 
 ## Suivi du poids
 
@@ -40,7 +46,7 @@ Chacun peut noter son poids. L'appli trace la moyenne sur 7 jours, la tendance p
 
 Les menus, les profils, le stock et la liste de courses sont partagés entre les deux téléphones grâce à Firestore. Dans Réglages, on crée un foyer sur un téléphone puis on saisit le code affiché sur l'autre. Tout se synchronise ensuite en direct, et l'appli continue de marcher sans réseau. Chaque téléphone s'ouvre sur le profil de son propriétaire.
 
-Les règles de sécurité Firestore sont dans le fichier firestore.rules. Elles imposent une connexion anonyme, interdisent de lister les foyers et limitent les champs acceptés. Seul quelqu'un qui connaît le code du foyer peut lire ou modifier ses données.
+Les règles de sécurité Firestore sont dans le fichier firestore.rules. Elles imposent une connexion anonyme, interdisent de lister les foyers et limitent les champs acceptés. Seul quelqu'un qui connaît le code du foyer peut lire ou modifier ses données. Pour ne pas avoir à modifier ces règles, la date du stock, les repas libres et Le reste à la maison voyagent rangés dans le journal des courses.
 
 ## Installer sur téléphone
 

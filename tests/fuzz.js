@@ -31,7 +31,7 @@ for(let c=0;c<${N};c++){
    for(const k of ["bkf","lunch","snack","dinner"]){const m=d[k];if(!m)continue;const r=d.recs[k];
     for(const f in m){if(!(m[f]>0)||!isFinite(m[f]))bad("QUANTITÉ INVALIDE",k+" "+f+"="+m[f]+" "+r.n)}
     if((k==="lunch"||k==="dinner")&&r.carb&&!(m[r.carb]>0))bad("SANS FÉCULENT",r.n);
-    if(!(m[r.prot]>0))bad("SANS PROTÉINE",k+" "+r.n);
+    if(r.prot&&!(m[r.prot]>0))bad("SANS PROTÉINE",k+" "+r.n);
     const RR=k==="bkf"?BKFR:k==="snack"?SNKR:MAINR;
     for(const f in m){const rg=RR[f];if(!rg)continue;const fixedMain=(k==="lunch"||k==="dinner")&&f!==r.prot&&f!==r.carb&&f!==r.fat&&f!=="painc";
      if(m[f]>rg[1]+0.5)bad("TROP "+k+" "+f,Math.round(m[f])+" g "+r.n+" | "+p.sex+p.h+"/"+p.w+" "+p.goal+" adj"+p.adj);

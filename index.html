@@ -412,7 +412,10 @@ function fbReady(){
  try{firebase.initializeApp(FB_CONFIG);db=firebase.firestore();db.enablePersistence({synchronizeTabs:true}).catch(()=>{});return true}catch(e){return false}
 }
 async function fbAuth(){const u=firebase.auth().currentUser;if(u)return u.uid;const c=await firebase.auth().signInAnonymously();return c.user.uid}
-function sharedState(){const o={};SHARED.forEach(k=>{if(S[k]!==undefined)o[k]=S[k]});return JSON.parse(JSON.stringify(o))}
+/* les règles Firestore n'acceptent qu'une liste fixe de champs : la date du stock, les repas libres et le reste de la maison
+   voyagent donc rangés dans le journal des courses, sous _app, et sont remis à leur place à la réception */
+const PACKED=["stockAt","off","extra"];
+function sharedState(){const o={};SHARED.forEach(k=>{if(!PACKED.includes(k)&&S[k]!==undefined)o[k]=S[k]});const app={};PACKED.forEach(k=>{if(S[k]!==undefined)app[k]=S[k]});o.ledger=Object.assign({},S.ledger||{},{_app:app});return JSON.parse(JSON.stringify(o))}
 function foyer(code){return db.collection("foyers").doc(code||S.household)}
 function setSync(state,msg){SYNC={state,msg:msg||""};const el=document.getElementById("syncstate");if(el)el.textContent=syncLabel()}
 function syncLabel(){return {off:"",wait:"Connexion…",ok:"Synchronisé",err:"Erreur de synchro : "+SYNC.msg,missing:"Ce foyer n'existe plus"}[SYNC.state]||""}
@@ -424,8 +427,9 @@ function schedulePush(){
 }
 function pushChecked(w,k,v){if(!S.household||!db)return;foyer().update({["checked."+w+"."+k]:v}).catch(e=>setSync("err",e.code||e.message))}
 function applyRemote(d){
- SHARED.forEach(k=>{if(d[k]!==undefined)S[k]=d[k]});S.checked=d.checked||{};
+ SHARED.forEach(k=>{if(!PACKED.includes(k)&&d[k]!==undefined)S[k]=d[k]});S.checked=d.checked||{};
  if(!S.done)S.done={};if(!S.stock)S.stock={};if(!S.ledger)S.ledger={};
+ const app=S.ledger._app;if(app){PACKED.forEach(k=>{if(app[k]!==undefined)S[k]=app[k]});delete S.ledger._app}else PACKED.forEach(k=>{if(d[k]!==undefined)S[k]=d[k]});
  S.people.forEach((p,i)=>{if(!p.lunch)p.lunch=i===1?"alt":"home";if(p.sweet===undefined)p.sweet=i===1});
  lastPushed=JSON.stringify(sharedState());if(renamePrincess())schedulePush();buildPlan();if(catchUpStock())schedulePush();if(NEEDSTK){NEEDSTK=false;if(stockMeals())schedulePush()}saveLocal();
  const a=document.activeElement;if(!(a&&(a.tagName==="INPUT"||a.tagName==="SELECT")))render();
@@ -527,7 +531,8 @@ const mul=(a,f)=>({p:a.p*f,l:a.l*f,g:a.g*f});
 const BOUNDS={
  main:{riz:[50,165],pates:[50,165],semoule:[50,165],quinoa:[50,145],pdt:[160,400],patdouce:[160,400],tortilla:[60,240],painc:[50,140],lentilles:[45,155],
   poulet:[95,245],dinde:[95,245],boeuf5:[95,245],rumsteck:[95,245],porc:[95,245],jambon:[60,195],thon:[65,200],crevettes:[95,245],oeuf:[110,275],
-  huile:[0,18],beurre:[0,18],creme:[20,75],emmental:[15,45],pesto:[10,32],avocat:[40,150]},
+  huile:[0,18],beurre:[0,18],creme:[20,75],emmental:[15,45],pesto:[10,32],avocat:[40,150],
+  epaule:[95,245],cuisse:[140,400],nouilles:[50,145],coco:[25,90]},
  bkf:{lait:[150,350],muesli:[20,45],avoine:[35,115],painc:[45,135],whey:[10,38],fblanc:[100,320],oeuf:[110,220],beurre:[0,12],cacahuete:[10,28],amandes:[10,32]},
  snack:{fblanc:[100,290],whey:[15,38],banane:[60,240],avoine:[20,65],pomme:[75,300],choco:[10,24],jambon:[40,115],painc:[35,95],beurre:[0,8],amandes:[10,28],frouges:[60,240]}
 };
@@ -700,7 +705,7 @@ function resolvePlan(){
   ["bkf","snack","dinner"].forEach(k=>{let r=ov[k]&&byName(ov[k]);if(r&&ok(r)){day[k]=r;day.ov[k]=1}else{day[k]=b[k];if(!ok(day[k]))day[k]=altFor(plan,day,i,k,b[k])}});
   let r=ov.lunch&&byName(ov.lunch);
   if(r&&ok(r)){day.lunch=r;day.ov.lunch=1}
-  else if(b.left&&plan[i-1]){day.lunch=plan[i-1].dinner;day.left=true}
+  else if(b.left&&plan[i-1]){day.lunch=plan[i-1].dinner;day.left=!offOf(plan[i-1].date).includes("dinner")}
   else{day.lunch=b.lunch||b.dinner;if(!ok(day.lunch))day.lunch=altFor(plan,day,i,"lunch",day.lunch)}
   plan.push(day);
  });
@@ -825,10 +830,10 @@ function toBuy(w){
   if(b>0.5&&!small)buy[k]=b}
  return {tot,buy,have,groups,order};
 }
-function unitLbl(k){const f=F[k];return f.pc?f.unit[1]:k==="lait"?"ml":"g"}
+function unitLbl(k){const f=F[k];return f.pc?f.unit[1]:ML(k)?"ml":"g"}
 function toInput(k,g){const f=F[k];return f.pc?Math.ceil(g/f.pc-0.001):Math.ceil(g/50)*50}
 function fromInput(k,v){const f=F[k];v=parseFloat(String(v).replace(",","."));if(isNaN(v)||v<0)v=0;return f.pc?v*f.pc:v}
-function stockQty(k,g){const f=F[k];if(f.pc){const u=Math.round(g/f.pc*10)/10;return String(u).replace(".",",")+" "+(u>1?f.unit[1]:f.unit[0])}if(k==="lait")return (g/1000).toFixed(1).replace(".",",")+" L";return g>=1000?(g/1000).toFixed(2).replace(".",",")+" kg":Math.round(g)+" g"}
+function stockQty(k,g){const f=F[k];if(f.pc){const st=f.step||1,u=Math.max(st,Math.round(g/f.pc/st)*st);return String(u).replace(".",",")+" "+(u>1?f.unit[1]:f.unit[0])}if(k==="lait")return (g/1000).toFixed(1).replace(".",",")+" L";if(k==="coco")return Math.round(g)+" ml";return g>=1000?(g/1000).toFixed(2).replace(".",",")+" kg":Math.round(g)+" g"}
 
 function lastDone(){let l=-1;for(let w=0;w<nWeeks();w++)if(isDone(w))l=w;return l}
 
@@ -844,8 +849,8 @@ const fr=(x,d=0)=>nf(d,d).format(Number(x));
 function nWeeks(){return Math.ceil(S.days/7)}
 /* poids une fois cuit pour 1 g cru, en moyenne : la viande perd de l'eau, les féculents en prennent.
    Les quantités restent données crues, le poids cuit sert à partager ce qui sort de la poêle ou de la casserole. */
-const COOK={poulet:.7,dinde:.7,porc:.7,boeuf5:.7,rumsteck:.7,crevettes:.8,riz:2.6,pates:2.3,semoule:2.4,quinoa:2.7};
-const COOKN={poulet:"Poulet cuit",dinde:"Dinde cuite",porc:"Porc cuit",boeuf5:"Haché cuit",rumsteck:"Bœuf cuit",crevettes:"Crevettes cuites",riz:"Riz cuit",pates:"Pâtes cuites",semoule:"Semoule cuite",quinoa:"Quinoa cuit"};
+const COOK={poulet:.7,dinde:.7,porc:.7,epaule:.7,boeuf5:.7,rumsteck:.7,crevettes:.8,riz:2.6,pates:2.3,semoule:2.4,quinoa:2.7};
+const COOKN={poulet:"Poulet cuit",dinde:"Dinde cuite",porc:"Porc cuit",epaule:"Porc cuit",boeuf5:"Haché cuit",rumsteck:"Bœuf cuit",crevettes:"Crevettes cuites",riz:"Riz cuit",pates:"Pâtes cuites",semoule:"Semoule cuite",quinoa:"Quinoa cuit"};
 const COOKW={dinde:"cuite",semoule:"cuite",pates:"cuites",crevettes:"cuites"};
 /* la cuisson change d'une poêle à l'autre (et la viande surgelée rend plus d'eau) : quand on pèse ce qui sort de la poêle,
    l'appli partage ce poids réel et retient le rapport cuit sur cru pour la fois suivante, sur ce téléphone */
@@ -853,8 +858,9 @@ let CUISSON={};try{CUISSON=JSON.parse(localStorage.getItem("menus-cuisson-v1")||
 const yieldOf=x=>{const v=+CUISSON[x];return v>0?v:COOK[x]};
 const yieldRange=x=>COOK[x]<1?[.45,1]:[1.4,4];
 const cuit=(x,g)=>Math.max(5,Math.round(g*yieldOf(x)/5)*5);
-function qty(k,g){const f=F[k];if(f.pc){const u=g/f.pc;const n=Number.isInteger(u)?u:u.toFixed(1).replace(".",",");return n+" "+(u>1?f.unit[1]:f.unit[0])}return g>=1000?(g/1000).toFixed(2).replace(".",",")+" kg":Math.round(g)+" g"}
-function shopQty(k,g){const f=F[k];if(f.pc){const u=Math.ceil(g/f.pc);return u+" "+(u>1?f.unit[1]:f.unit[0])}if(k==="lait")return (Math.ceil(g/100)/10).toFixed(1).replace(".",",")+" L";const r=Math.ceil(g/50)*50;return r>=1000?(r/1000).toFixed(r%1000?2:0).replace(".",",")+" kg":r+" g"}
+const ML=k=>k==="lait"||k==="coco";
+function qty(k,g){const f=F[k];if(f.pc){const u=g/f.pc;const n=Number.isInteger(u)?u:u.toFixed(1).replace(".",",");return n+" "+(u>1?f.unit[1]:f.unit[0])}if(ML(k))return g>=1000?(g/1000).toFixed(2).replace(".",",")+" L":Math.round(g)+" ml";return g>=1000?(g/1000).toFixed(2).replace(".",",")+" kg":Math.round(g)+" g"}
+function shopQty(k,g){const f=F[k];if(f.pc){const u=Math.ceil(g/f.pc);return u+" "+(u>1?f.unit[1]:f.unit[0])}if(k==="lait")return (Math.ceil(g/100)/10).toFixed(1).replace(".",",")+" L";const r=Math.ceil(g/50)*50;if(k==="coco")return r+" ml";return r>=1000?(r/1000).toFixed(r%1000?2:0).replace(".",",")+" kg":r+" g"}
 function sumItems(list){const o={};list.forEach(m=>{if(m)for(const k in m)o[k]=(o[k]||0)+m[k]});return o}
 const mins=r=>{const t=r.t||[0,0];return t[0]+t[1]};
 const quick=r=>mins(r)>0&&mins(r)<=20;
@@ -895,11 +901,14 @@ function ring(val,target){
 const bar=(cls,lab,v,t)=>`<div class="bar ${cls}"><div class="lbl"><b>${lab}</b><span>${Math.round(v)} / ${t} g</span></div><div class="tr"><i style="width:${Math.min(100,Math.round(v/t*100))}%"></i></div></div>`;
 function summaryCard(i){
  if(S.me==="all"){
-  return `<div class="card stack">${S.people.map((p,pi)=>{const d=pd(pi,i);const m=macrosOf(sumItems([d.bkf,d.lunch,d.snack,d.dinner]));return `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div><b>${esc(p.name)}</b><div class="chips" style="margin-top:4px">${p.train.some(Boolean)?`<span class="chip${d.tr?" acc":""}">${d.tr?"Jour de salle":"Repos"}</span>`:""}${d.out?`<span class="chip">Midi en entreprise</span>`:""}</div></div><div class="num" style="text-align:right"><b>${fr(m.kcal)}</b> <span class="muted small">/ ${fr(d.target.kcal)} kcal</span></div></div>`}).join(`<div style="border-top:1px solid var(--line)"></div>`)}<p class="muted small" style="margin:0">Les fiches des repas donnent les quantités à cuisiner pour vous deux.</p></div>`;
+  return `<div class="card stack">${S.people.map((p,pi)=>{const d=pd(pi,i);const m=macrosOf(sumItems([d.bkf,d.lunch,d.snack,d.dinner]));return `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div><b>${esc(p.name)}</b><div class="chips" style="margin-top:4px">${p.train.some(Boolean)?`<span class="chip${d.tr?" acc":""}">${d.tr?"Jour de salle":"Repos"}</span>`:""}${d.out?`<span class="chip">Midi en entreprise</span>`:""}</div></div><div class="num" style="text-align:right">${freeDay(d)?`<span class="muted small">Repas libres</span>`:`<b>${fr(m.kcal)}</b> <span class="muted small">/ ${fr(d.target.kcal)} kcal</span>`}</div></div>`}).join(`<div style="border-top:1px solid var(--line)"></div>`)}<p class="muted small" style="margin:0">Les fiches des repas donnent les quantités à cuisiner pour vous deux.</p></div>`;
  }
  const d=pd(S.me,i),t=d.target,m=macrosOf(sumItems([d.bkf,d.lunch,d.snack,d.dinner]));
- return `<div class="card stack"><div class="sum">${ring(m.kcal,t.kcal)}<div class="bars">${bar("p","Protéines",m.p,t.P)}${bar("g","Glucides",m.g,t.G)}${bar("l","Lipides",m.l,t.L)}</div></div><div class="chips">${S.people[S.me].train.some(Boolean)?`<span class="chip${d.tr?" acc":""}">${d.tr?"Jour de salle":"Jour de repos"}</span>`:""}${d.out?`<span class="chip">Midi en entreprise, non compté ici</span>`:""}${S.people[S.me].adj?`<span class="chip">Calories ajustées de ${S.people[S.me].adj>0?"+":""}${S.people[S.me].adj}</span>`:""}</div>${gapNote(S.people[S.me],m.kcal,t.kcal)}</div>`;
+ if(freeDay(d))return `<div class="card stack"><b>Journée libre</b><p class="muted small" style="margin:0">Aucun repas de l'appli aujourd'hui, rien n'est compté.</p></div>`;
+ return `<div class="card stack"><div class="sum">${ring(m.kcal,t.kcal)}<div class="bars">${bar("p","Protéines",m.p,t.P)}${bar("g","Glucides",m.g,t.G)}${bar("l","Lipides",m.l,t.L)}</div></div><div class="chips">${S.people[S.me].train.some(Boolean)?`<span class="chip${d.tr?" acc":""}">${d.tr?"Jour de salle":"Jour de repos"}</span>`:""}${d.out?`<span class="chip">Midi en entreprise, non compté ici</span>`:""}${d.off?`<span class="chip">Repas libre, non compté ici</span>`:""}${S.people[S.me].adj?`<span class="chip">Calories ajustées de ${S.people[S.me].adj>0?"+":""}${S.people[S.me].adj}</span>`:""}</div>${gapNote(S.people[S.me],m.kcal,t.kcal)}</div>`;
 }
+/* tous les repas de la journée sont libres ou pris dehors */
+const freeDay=d=>!!d.off&&!d.bkf&&!d.lunch&&!d.snack&&!d.dinner;
 /* si les plats du jour ne suffisent pas à atteindre l'objectif, on le dit et on propose quoi ajouter */
 function gapNote(p,k,t){const gap=t-k;
  if(gap>t*0.07)return `<div class="note small" style="margin:0">Il manque environ ${fr(Math.round(gap/10)*10)} kcal aujourd'hui. Ajoute un fruit, une poignée d'amandes ou une tranche de pain à un repas.</div>`;
@@ -910,7 +919,7 @@ function mealMeta(day,i,k,rec){
  if(mins(rec))out.push(`<span class="chip">${mins(rec)} min</span>`);
  if(quick(rec))out.push(`<span class="chip acc">Rapide</span>`);
  if(k==="lunch"&&day.left)out.push(`<span class="chip acc">Restes d'hier soir</span>`);
- const nx=PLAN[i+1];if(k==="dinner"&&nx&&nx.left&&nx.lunch===rec)out.push(`<span class="chip acc">+ boîtes pour demain midi</span>`);
+ const nx=PLAN[i+1];if(k==="dinner"&&nx&&nx.left&&nx.lunch===rec&&!offOf(nx.date).includes("lunch"))out.push(`<span class="chip acc">+ boîtes pour demain midi</span>`);
  if(day.ov[k])out.push(`<span class="chip">Changé</span>`);
  return out.join("");
 }
@@ -933,7 +942,7 @@ function viewJour(){
   if(S.me==="all"){
    const groups=[];S.people.forEach((p,pi)=>{const d=pd(pi,i);if(!d[k])return;const r=d.recs[k]||day[k];let g=groups.find(x=>x.r===r);if(!g){g={r,who:[],kcal:0};groups.push(g)}g.who.push(pi);g.kcal+=macrosOf(d[k]).kcal});
    if(!groups.length){const off=S.people.some((p,pi)=>{const d=pd(pi,i);return d.off&&d.off[k]});cards+=off?`<button class="meal off" data-a="unoff" data-v="${i}|${k}"><div class="k">${lab}</div><div class="n">Repas libre</div><div class="meta">Rien de l'appli ce repas-là. Touche pour remettre le plat prévu.</div></button>`:`<div class="meal off"><div class="k">${lab}</div><div class="n">Personne ne mange à la maison</div></div>`;return}
-   groups.forEach(g=>{cards+=`<button class="meal" data-a="meal" data-v="${i}|${k}|${esc(g.r.n)}"><div class="k">${lab}${groups.length>1?` · ${g.who.map(x=>first(S.people[x])).join(", ")}`:""}</div><div class="n">${esc(g.r.n)}</div><div class="meta">${mealMeta(day,i,k,g.r)}</div><div class="r">${fr(g.kcal)} kcal${ic("right")}</div></button>`});
+   groups.forEach(g=>{cards+=`<button class="meal" data-a="meal" data-v="${i}|${k}|${esc(g.r.n)}"><div class="k">${lab}${groups.length>1||g.who.length<S.people.length?` · ${g.who.map(x=>first(S.people[x])).join(", ")}`:""}</div><div class="n">${esc(g.r.n)}</div><div class="meta">${mealMeta(day,i,k,g.r)}</div><div class="r">${fr(g.kcal)} kcal${ic("right")}</div></button>`});
   }else{
    const d=pd(S.me,i);
    if(k==="lunch"&&d.out){cards+=`<div class="meal off"><div class="k">${lab}</div><div class="n">Midi en entreprise</div></div>`;return}
@@ -955,7 +964,7 @@ function sheetMeal(o){
  let sel=o.sel!=null?o.sel:(S.me==="all"?"all":(who.includes(S.me)?S.me:who[0]));
  if(sel!=="all"&&!who.includes(+sel))sel=who[0];
  if(sel==="all"&&who.length<2)sel=who[0];
- const nx=PLAN[i+1],boxes=k==="dinner"&&nx&&nx.left&&nx.lunch===rec;
+ const nx=PLAN[i+1],boxes=k==="dinner"&&nx&&nx.left&&nx.lunch===rec&&!offOf(nx.date).includes("lunch");
  const rank=x=>x===rec.prot?0:x===rec.carb?1:x===rec.fat?3:2;
  const side=x=>x==="painc"&&rec.carb!=="painc"&&(k==="lunch"||k==="dinner");
  const ingList=items=>`<div class="list ing">${Object.keys(items).sort((a,b)=>rank(a)-rank(b)).map(x=>`<div class="li"><div class="t"><b>${esc(F[x].n)}</b>${side(x)?"<small>en accompagnement</small>":""}</div><div class="v">${qty(x,items[x])}${COOK[x]?`<small>≈ ${cuit(x,items[x])} g ${COOKW[x]||"cuit"}</small>`:""}</div></div>`).join("")}</div>`;
@@ -995,7 +1004,7 @@ function viewSemaine(){
   const d=PLAN[i];
   const train=S.people.filter(p=>p.train[dow(d.date)]).map(first);
   const out=S.people.filter(p=>eatsOut(p,d.date)).map(first);
-  rows+=`<button class="wday${i===ti?" today":""}" data-a="goday" data-v="${i}"><div class="d"><span>${WD[dow(d.date)]}</span><b>${d.date.getDate()}</b></div><div class="m"><div><em>Midi</em>${esc(d.lunch.n)}${d.left?` <span class="muted">(restes)</span>`:""}</div><div><em>Soir</em>${esc(d.dinner.n)}</div>${train.length||out.length?`<div class="chips" style="margin-top:3px">${train.length?`<span class="chip acc">Salle : ${train.join(", ")}</span>`:""}${out.length?`<span class="chip">En entreprise : ${out.join(", ")}</span>`:""}</div>`:""}</div>${ic("right").replace("<svg",'<svg class="chev"')}</button>`;
+  rows+=`<button class="wday${i===ti?" today":""}" data-a="goday" data-v="${i}"><div class="d"><span>${WD[dow(d.date)]}</span><b>${d.date.getDate()}</b></div><div class="m"><div><em>Midi</em>${offOf(d.date).includes("lunch")?`<span class="muted">Repas libre</span>`:esc(d.lunch.n)+(d.left?` <span class="muted">(restes)</span>`:"")}</div><div><em>Soir</em>${offOf(d.date).includes("dinner")?`<span class="muted">Repas libre</span>`:esc(d.dinner.n)}</div>${train.length||out.length?`<div class="chips" style="margin-top:3px">${train.length?`<span class="chip acc">Salle : ${train.join(", ")}</span>`:""}${out.length?`<span class="chip">En entreprise : ${out.join(", ")}</span>`:""}</div>`:""}</div>${ic("right").replace("<svg",'<svg class="chev"')}</button>`;
  }
  return `${nextBanner()}${weekNav(w,"week")}<div class="stack">${rows}</div>
  <div class="sec"><h2>Options des menus</h2></div>
@@ -1008,7 +1017,7 @@ function viewCourses(){
  stockOf();const w=S.week,open=firstOpenWeek();
  if(isDone(w)){
   const L=S.ledger[wkKey(w)]||{},items=Object.keys(L.bought||{}).filter(k=>L.bought[k]>0);
-  return `${weekNav(w,"week")}<div class="card stack"><div style="display:flex;align-items:center;gap:10px"><span class="ck" style="background:var(--accent);border-color:var(--accent)">${ic("check").replace("<svg",'<svg style="opacity:1"')}</span><b>Courses faites pour cette semaine</b></div><p class="muted small" style="margin:0">Les achats ont été ajoutés au stock, et ce que vous mangez cette semaine en a été retiré.</p></div>
+  return `${weekNav(w,"week")}<div class="card stack"><div style="display:flex;align-items:center;gap:10px"><span class="ck" style="background:var(--accent);border-color:var(--accent)">${ic("check").replace("<svg",'<svg style="opacity:1"')}</span><b>Courses faites pour cette semaine</b></div><p class="muted small" style="margin:0">Les achats ont été ajoutés au stock. Ce que vous mangez en est retiré jour après jour.</p></div>
   ${items.length?`<div class="sec"><h2>Acheté</h2></div><div class="list">${items.map(k=>`<div class="li"><div class="t"><b>${esc(F[k].n)}</b></div><div class="v">${stockQty(k,L.bought[k])}</div></div>`).join("")}</div>`:""}
   ${w===lastDone()?`<div style="margin-top:16px"><button class="btn line full" data-a="undo">${ic("undo")}Annuler la validation</button></div>`:""}`;
  }
@@ -1041,7 +1050,7 @@ function sheetBuy(){
 function viewStock(){
  const st=stockOf(),keys=Object.keys(st).filter(k=>st[k]>0.5);
  let html=`<div style="display:flex;gap:10px;margin:4px 0 6px"><button class="btn pri" style="flex:1" data-a="sheet" data-v="addstock">${ic("plus")}Ajouter au stock</button></div>`;
- html+=`<p class="muted small" style="margin:6px 2px 0">Quantités au ${S.stockAt&&S.stockAt>todayIso()?"matin du "+fmtLong(new Date(S.stockAt+"T12:00:00")).toLowerCase():"début de la journée"}. Chaque soir, ce que vous avez mangé dans la journée est retiré.</p>`;
+ html+=`<p class="muted small" style="margin:6px 2px 0">Quantités au ${S.stockAt&&S.stockAt>todayIso()?"matin du "+fmtLong(new Date(S.stockAt+"T12:00:00")).toLowerCase():"début de la journée"}. Chaque matin, ce que vous avez mangé la veille selon les menus est retiré.</p>`;
  if(!keys.length)html+=`<div class="empty"><b>Le stock est vide</b>Après tes premières courses validées, ce qui reste à la maison apparaîtra ici. Tu peux aussi ajouter ce que tu as déjà dans tes placards.</div>`;
  const groups={};keys.forEach(k=>{(groups[F[k].r]=groups[F[k].r]||[]).push(k)});
  AISLES.forEach(a=>{const ks=(groups[a]||[]).sort((x,y)=>F[x].n.localeCompare(F[y].n));if(!ks.length)return;
@@ -1066,7 +1075,7 @@ function sheetExtra(v){
 }
 function sheetAddStock(){
  const opts=Object.keys(F).sort((a,b)=>F[a].n.localeCompare(F[b].n)).map(k=>`<option value="${k}">${esc(F[k].n)}</option>`).join("");
- return {kicker:"Stock",title:"Ajouter au stock",body:`<label class="field">Aliment<select id="addk">${opts}</select></label><label class="field">Quantité<input id="addq" type="number" inputmode="decimal" min="0" step="any" placeholder="Par exemple 500"></label><p class="muted small" style="margin:0">En grammes, en millilitres pour le lait, et en nombre pour les œufs, bananes, pommes, tortillas et pains burger.</p><button class="btn pri full" data-a="addstock">Ajouter</button>`};
+ return {kicker:"Stock",title:"Ajouter au stock",body:`<label class="field">Aliment<select id="addk">${opts}</select></label><label class="field">Quantité<input id="addq" type="number" inputmode="decimal" min="0" step="any" placeholder="Par exemple 500"></label><p class="muted small" style="margin:0">En grammes, en millilitres pour le lait et le lait de coco, et en nombre pour les œufs, bananes, pommes, tortillas et pains burger.</p><button class="btn pri full" data-a="addstock">Ajouter</button>`};
 }
 
 /* ---------- Écran Réglages ---------- */
@@ -1144,7 +1153,7 @@ function sheetWho(){return {kicker:"Ce téléphone",title:"Qui utilise ce télé
 function sheetExcl(){return {kicker:"Menus",title:"Aliments à éviter",body:`<div class="list">${EXCL.map(([k,l])=>`<button class="li" data-a="ex" data-v="${k}"><div class="t"><b>${l}</b></div>${sw(S.excl.includes(k))}</button>`).join("")}</div><p class="muted small" style="margin:0">Les plats qui en contiennent ne sont plus proposés.</p>`}}
 function sheetBanned(){const b=S.banned||[];return {kicker:"Menus",title:"Plats retirés",body:b.length?`<div class="list">${b.map(n=>`<div class="li"><div class="t"><b>${esc(n)}</b></div><button class="btn line" style="min-height:36px;padding:0 12px;font-size:14px" data-a="unban" data-v="${esc(n)}">Remettre</button></div>`).join("")}</div>`:`<div class="empty"><b>Aucun plat retiré</b>Appuie sur « Je n'aime pas » dans la fiche d'un plat pour le retirer des menus.</div>`}}
 function sheetRegen(){return {kicker:"Menus",title:"Nouveaux menus ?",body:`<p style="margin:0">Tous les plats du mois vont être tirés à nouveau. Les plats que tu as changés à la main et les cases cochées dans la liste de courses seront perdus.</p><button class="btn pri full" data-a="regen">Générer de nouveaux menus</button><button class="btn line full" data-a="close">Annuler</button>`}}
-function sheetClear(){return {kicker:"Stock",title:"Vider le stock ?",body:`<p style="margin:0">Tout le stock sera remis à zéro.</p><button class="btn pri full" data-a="clearstock">Vider le stock</button><button class="btn line full" data-a="close">Annuler</button>`}}
+function sheetClear(){return {kicker:"Stock",title:"Vider le stock ?",body:`<p style="margin:0">Les aliments des recettes seront remis à zéro. « Le reste à la maison » ne change pas.</p><button class="btn pri full" data-a="clearstock">Vider le stock</button><button class="btn line full" data-a="close">Annuler</button>`}}
 function sheetWlog(){const pi=S.me==="all"?0:S.me,p=S.people[pi],log=(p.log||[]).slice().reverse();return {kicker:"Suivi du poids",title:"Pesées de "+p.name,body:log.length?`<div class="list">${log.map(e=>`<div class="li"><div class="t"><b>${e.d.split("-").reverse().join("/")}</b></div><div class="v">${fr(e.kg,1)} kg</div><button class="icon-btn" style="box-shadow:none;background:var(--surface2)" data-a="delw" data-v="${pi}:${e.d}" aria-label="Supprimer la pesée du ${e.d}">${ic("x")}</button></div>`).join("")}</div>`:`<div class="empty">Aucune pesée.</div>`}}
 
 /* ---------- Rendu ---------- */
@@ -1231,7 +1240,7 @@ document.addEventListener("click",e=>{
   case "close":closeSheet();break;
   case "sheet":{if(v.startsWith("extra:"))openSheet({t:"extra",v:v.slice(6)});else if(v.startsWith("stk:"))openSheet({t:"stk",k:v.slice(4)});else if(v.startsWith("prof:"))openSheet({t:"prof",pi:+v.slice(5)});else openSheet({t:v});break}
   case "leftovers":S.leftovers=!S.leftovers;refresh(true);break;
-  case "regen":S.seed=Math.floor(Math.random()*1e9);S.checked={};S.ov={};lastPushed="";S.sheet=null;refresh(true);break;
+  case "regen":S.seed=Math.floor(Math.random()*1e9);S.checked={};S.ov={};lastPushed="";S.sheet=null;buildPlan();stockMeals();refresh();break;
   case "cheap":S.cheap=!S.cheap;refresh();break;
   case "nextplan":{S.start=addDays(S.start,S.days);S.seed=Math.floor(Math.random()*1e9);S.ov={};S._seen={};lastPushed="";DCACHE.clear();buildPlan();stockMeals();const t=todayIdx();S.day=t>=0?t:0;S.week=Math.floor(S.day/7);refresh();window.scrollTo(0,0);break}
   case "ck":{const w=wkKey(S.week);S.checked[w]=S.checked[w]||{};const nv=!S.checked[w][v];S.checked[w][v]=nv;saveLocal();pushChecked(w,v,nv);render();break}
@@ -1242,9 +1251,9 @@ document.addEventListener("click",e=>{
    S.ledger[wkKey(w)]={before:Object.assign({},st),bought};
    Object.keys(bought).forEach(k=>{const q=(st[k]||0)+(bought[k]||0);if(q>0.5)st[k]=q});
    S.done[wkKey(w)]=true;S.checked[wkKey(w)]={};lastPushed="";S.sheet=null;refresh();window.scrollTo(0,0);break}
-  case "undo":{const key=wkKey(S.week);if(S.ledger[key]){S.stock=S.ledger[key].before;delete S.ledger[key]}delete S.done[key];refresh();break}
+  case "undo":{const key=wkKey(S.week),L=S.ledger[key];if(L){const st=stockOf();for(const k in (L.bought||{})){const q=(st[k]||0)-L.bought[k];if(q>0.5)st[k]=q;else delete st[k]}delete S.ledger[key]}delete S.done[key];refresh();break}
   case "stksave":{const q=fromInput(v,$("#stkv").value),st=stockOf();if(q>0.5)st[v]=q;else delete st[v];S.sheet=null;refresh();break}
-  case "setoff":case "unoff":{const [i,k]=v.split("|");const key=iso(PLAN[+i].date);S.off=S.off||{};const l=new Set(S.off[key]||[]);if(a==="setoff")l.add(k);else l.delete(k);if(l.size)S.off[key]=[...l];else delete S.off[key];S.sheet=null;refresh();break}
+  case "setoff":case "unoff":{const [i,k]=v.split("|");const key=iso(PLAN[+i].date);S.off=S.off||{};const l=new Set(S.off[key]||[]);if(a==="setoff")l.add(k);else l.delete(k);if(l.size)S.off[key]=[...l];else delete S.off[key];S.sheet=null;resolvePlan();refresh();break}
   case "exsave":{const n=$("#exn").value.trim(),q=$("#exq").value.trim(),o=$("#exo").value;S.extra=S.extra||[];if(n){const it={n,q,o};if(v==="new")S.extra.push(it);else S.extra[+v]=it}S.sheet=null;refresh();break}
   case "exdel":{S.extra=(S.extra||[]).filter((x,j)=>j!==+v);S.sheet=null;refresh();break}
   case "stkmeals":{stockMeals();refresh();S.tab="semaine";render();window.scrollTo(0,0);break}
@@ -1284,7 +1293,7 @@ document.addEventListener("input",e=>{
 });
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&S.sheet)closeSheet();if(e.key==="Enter"&&e.target.id==="wkg"){const b=document.querySelector('[data-a="addw"]');if(b)b.click()}});
 
-const APPV="2026-11-22d";
+const APPV="2026-11-22f";
 /* ---------- Démarrage ---------- */
 if(S.tab==="menus")S.tab="jour";else if(S.tab==="profils")S.tab="moi";
 function renamePrincess(){let ch=false;const p=S.people[1];if(p&&(p.name==="Ma conjointe"||p.name==="Personne 2")){p.name="Princesse";ch=true}
