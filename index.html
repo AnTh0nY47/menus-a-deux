@@ -387,7 +387,7 @@ function eatsOut(p,date){
 /* ---------- État ---------- */
 function nextMonday(){const d=new Date();d.setHours(12,0,0,0);const k=(8-d.getDay())%7||7;d.setDate(d.getDate()+k);return d.toISOString().slice(0,10)}
 const DEFAULT={
- tab:"jour",week:0,seed:20261116,start:nextMonday(),days:28,excl:["fdm"],v:13,
+ tab:"jour",week:0,seed:20261116,start:nextMonday(),days:28,excl:["fdm"],v:14,
  people:[
   {name:"Anthony",sex:"H",age:22,h:188,w:85,act:2,goal:"recompo",kadj:-300,snack:false,lunch:"home",sweet:false,bkfFixed:"Œufs brouillés, blanc de poulet et tartines",train:[true,true,false,true,true,false,false]},
   {name:"Princesse",sex:"F",age:22,h:160,w:66,goalMin:50,goalMax:60,act:0,goal:"perte",kadj:0,snack:false,lunch:"alt",sweet:true,bkfFixed:"Flocons d'avoine, muesli chocolat et lait",train:[false,false,false,false,false,false,false]}
@@ -1281,7 +1281,7 @@ document.addEventListener("input",e=>{
 });
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&S.sheet)closeSheet();if(e.key==="Enter"&&e.target.id==="wkg"){const b=document.querySelector('[data-a="addw"]');if(b)b.click()}});
 
-const APPV="2026-11-22a";
+const APPV="2026-11-22b";
 /* ---------- Démarrage ---------- */
 if(S.tab==="menus")S.tab="jour";else if(S.tab==="profils")S.tab="moi";
 function renamePrincess(){let ch=false;const p=S.people[1];if(p&&(p.name==="Ma conjointe"||p.name==="Personne 2")){p.name="Princesse";ch=true}
@@ -1317,6 +1317,8 @@ function renamePrincess(){let ch=false;const p=S.people[1];if(p&&(p.name==="Ma c
  if((S.v||0)<12){if(S.people.some(q=>/anthony/i.test(q.name||""))&&S.start==="2026-11-16"&&S.stock){const B={hverts:110,hrouges:65};for(const k in B)S.stock[k]=(S.stock[k]||0)+B[k]}S.v=12;ch=true}
  /* version 13 : petit déjeuner et midi du 22 novembre libres (restes des lasagnes) */
  if((S.v||0)<13){if(S.people.some(q=>/anthony/i.test(q.name||""))&&S.start==="2026-11-16"){S.off=S.off||{};const l=new Set(S.off["2026-11-22"]||[]);l.add("bkf");l.add("lunch");S.off["2026-11-22"]=[...l]}S.v=13;ch=true}
+ /* version 14 : dîner du 22 novembre libre aussi (restes des lasagnes) */
+ if((S.v||0)<14){if(S.people.some(q=>/anthony/i.test(q.name||""))&&S.start==="2026-11-16"){S.off=S.off||{};const l=new Set(S.off["2026-11-22"]||[]);l.add("dinner");S.off["2026-11-22"]=[...l]}S.v=14;ch=true}
  S.people.forEach(q=>{if(q.bkfFixed===undefined)q.bkfFixed=""});
  return ch}
 renamePrincess();
