@@ -361,7 +361,16 @@ const SNK=[
 /* Prix moyens en euros par kg (ou par litre), marque distributeur, grande surface, fin 2026. PRB : surgelés et gros paquets */
 const PR={epaule:7,merguez:11,cuisse:5,lardons:12,butternut:2.5,coco:5,nouilles:5,muesli:4.5,bpoulet:13,crevettes:16,poulet:11,dinde:11,boeuf5:10,rumsteck:16,porc:13,jambon:12,saumon:20,thon:12,oeuf:5.5,lentilles:3.5,hrouges:2.5,pchiches:2.5,riz:2,pates:1.5,semoule:2,quinoa:7,pdt:1.5,patdouce:3,painc:4,painburger:5,tortilla:5,avoine:2,lait:1,skyr:4.5,fblanc:2.5,whey:25,emmental:9,creme:4,huile:10,beurre:10,cacahuete:8,amandes:15,avocat:6,pesto:12,choco:10,miel:10,banane:2,pomme:2.5,frouges:6,brocoli:3,hverts:3,courgette:2.5,epinards:2.5,carottes:1.2,tomates:3,champi:5,salade:4,ppois:2.5,coulis:2,soja:6};
 const PRB={poulet:7.5,dinde:7.5,boeuf5:8,brocoli:2.5,courgette:2.2,champi:4,amandes:12,whey:20};
-function price(k,g){const v=(S.cheap&&PRB[k]!=null?PRB[k]:PR[k])||0;return g/1000*v}
+function price(k,g){const v=(S.cheap&&PRB[k]!=null?PRB[k]:PR[k])||0;return (PACK[k]?packN(k,g)*PACK[k].g:g)/1000*v}
+/* conserves et briques : on les achète entières (poids égoutté pour les boîtes). Pour les haricots rouges, les pois chiches
+   et les champignons, la quantité cuisinée d'un repas est en plus arrondie à la boîte, pour ne pas laisser de fond de boîte au frigo */
+const PACK={hrouges:{g:250,u:["boîte","boîtes"]},pchiches:{g:265,u:["boîte","boîtes"]},champi:{g:230,u:["boîte","boîtes"]},thon:{g:280,u:["boîte","boîtes"]},coulis:{g:500,u:["brique","briques"]},coco:{g:200,u:["brique","briques"]}};
+const CANFIT=["hrouges","pchiches","champi"];
+const packN=(k,g)=>Math.max(1,Math.ceil(g/PACK[k].g-0.04));
+const packLbl=(k,n)=>n+" "+(n>1?PACK[k].u[1]:PACK[k].u[0]);
+const KEEP={hrouges:"se congèle très bien",pchiches:"se congèle très bien",champi:"se garde 3 jours au frigo dans une boîte fermée",thon:"se garde 2 jours au frigo dans une boîte fermée",coulis:"se garde 4 jours au frigo, ou se congèle",coco:"se garde 3 jours au frigo, ou se congèle"};
+/* ce qui reste d'une boîte ou d'une brique entamée pour cette cuisson, et comment le garder */
+function packRest(items){const xs=Object.keys(items).filter(k=>PACK[k]&&items[k]>0).map(k=>{const r=packN(k,items[k])*PACK[k].g-items[k];return r>=PACK[k].g*0.15?`${esc(F[k].n.replace(/ égouttés?$/,""))} : il restera environ ${Math.round(r/10)*10} ${ML(k)?"ml":"g"} ${PACK[k].u[0]==="boîte"?"dans la boîte":"dans la brique"}, ça ${KEEP[k]}.`:""}).filter(Boolean);return xs.length?`<div class="note" style="margin-top:8px">${xs.join("<br>")}</div>`:""}
 /* formateurs créés une seule fois : sur iPhone, en recréer un à chaque nombre fait saccader l'affichage */
 const NF={};const nf=(a,b)=>NF[a+"_"+b]||(NF[a+"_"+b]=new Intl.NumberFormat("fr-FR",{minimumFractionDigits:a,maximumFractionDigits:b}));
 const DF_LONG=new Intl.DateTimeFormat("fr-FR",{weekday:"long",day:"numeric",month:"long"}),DF_SHORT=new Intl.DateTimeFormat("fr-FR",{day:"numeric",month:"short"});
@@ -388,7 +397,7 @@ function eatsOut(p,date){
 /* ---------- État ---------- */
 function nextMonday(){const d=new Date();d.setHours(12,0,0,0);const k=(8-d.getDay())%7||7;d.setDate(d.getDate()+k);return d.toISOString().slice(0,10)}
 const DEFAULT={
- tab:"jour",week:0,seed:20261116,start:nextMonday(),days:28,excl:["fdm"],v:14,
+ tab:"jour",week:0,seed:20261116,start:nextMonday(),days:28,excl:["fdm"],v:15,
  people:[
   {name:"Anthony",sex:"H",age:22,h:188,w:85,act:2,goal:"recompo",kadj:-300,snack:false,lunch:"home",sweet:false,bkfFixed:"Œufs brouillés, blanc de poulet et tartines",train:[true,true,false,true,true,false,false]},
   {name:"Princesse",sex:"F",age:22,h:160,w:66,goalMin:50,goalMax:60,act:0,goal:"perte",kadj:0,snack:false,lunch:"alt",sweet:true,bkfFixed:"Flocons d'avoine, muesli chocolat et lait",train:[false,false,false,false,false,false,false]}
@@ -566,7 +575,7 @@ function personDay(pi,i){
   const rec=k==="bkf"||k==="snack"?recFor(p,day,k,i):day[k];res.recs[k]=rec;
   const kind=k==="bkf"?"bkf":k==="snack"?"snack":"main";
   /* recette verrouillée : quantités exactes, ni mise à l'échelle ni calcul, le reste de la journée s'adapte */
-  const fixed=fixedItems(rec,rec.lock?1:s),fm=macrosOf(fixed);
+  const fixed=canRound(fixedItems(rec,rec.lock?1:s),i,k,rec),fm=macrosOf(fixed);
   const share={p:t.P*sh[k],l:t.L*sh[k],g:t.G*sh[k]};
   const init=rec.lock?{}:portion(rec,share,s,share);
   const vars=[];
@@ -647,7 +656,37 @@ function personDay(pi,i){
  return res;
 }
 const DCACHE=new Map();
-function pd(pi,i){const k=pi+":"+i;if(!DCACHE.has(k))DCACHE.set(k,personDay(pi,i));return DCACHE.get(k)}
+/* une même cuisson (le dîner et les boîtes du lendemain, pour tous ceux qui en mangent) utilise des boîtes entières */
+function canFactors(i,k,rec){
+ if(!rec||!rec.fx||(k!=="lunch"&&k!=="dinner")||!PLAN[i])return null;
+ if(k==="lunch"&&PLAN[i].left&&i>0&&PLAN[i-1].dinner===rec)return canFactors(i-1,"dinner",rec);
+ const key="can|"+i+"|"+k+"|"+rec.n;if(DCACHE.has(key))return DCACHE.get(key);
+ let res=null;const foods=CANFIT.filter(f=>rec.fx[f]);
+ if(foods.length){
+  const sc=sessionParts(i,k,rec).map(([pi,j])=>{const p=S.people[pi];return clamp(dayTarget(p,!!p.train[dow(PLAN[j].date)]).kcal/2800,0.5,1.15)});
+  foods.forEach(f=>{const tot=sc.reduce((a,x)=>a+rec.fx[f]*x,0);if(!(tot>0))return;const n=Math.max(1,Math.round(tot/PACK[f].g)),fa=n*PACK[f].g/tot;if(fa>=0.6&&fa<=2.6){res=res||{};res[f]=fa}});
+ }
+ DCACHE.set(key,res);return res;
+}
+/* les portions cuisinées ensemble : le repas de chacun, plus les boîtes du lendemain midi quand c'est le même plat */
+function sessionParts(i,k,rec){
+ if(k==="lunch"&&PLAN[i]&&PLAN[i].left&&i>0&&PLAN[i-1].dinner===rec)return sessionParts(i-1,"dinner",rec);
+ const out=[];const add=(j,kk)=>{const d=PLAN[j];if(!d||offOf(d.date).includes(kk))return;S.people.forEach((p,pi)=>{if(kk==="lunch"&&eatsOut(p,d.date))return;out.push([pi,j,kk])})};
+ add(i,k);if(k==="dinner"){const nx=PLAN[i+1];if(nx&&nx.left&&nx.lunch===rec)add(i+1,"lunch")}return out}
+function canRound(items,i,k,rec){const cf=canFactors(i,k,rec);if(cf)for(const f in cf)if(items[f])items[f]=roundItem(f,items[f]*cf[f]);return items}
+function rawPd(pi,i){const k="raw:"+pi+":"+i;if(!DCACHE.has(k))DCACHE.set(k,personDay(pi,i));return DCACHE.get(k)}
+function pd(pi,i){const k=pi+":"+i;if(!DCACHE.has(k)){const r=rawPd(pi,i);DCACHE.set(k,r?packAdjust(i,r):r)}return DCACHE.get(k)}
+/* thon, lait de coco, coulis : une fois les portions calculées, la cuisson entière est ajustée à la boîte ou à la brique
+   si ça ne bouge les quantités que d'un peu (entre -15 % et +20 %) ; sinon on garde les portions et la fiche dit quoi faire du reste */
+function packAdjust(i,r){let res=r;
+ ["lunch","dinner"].forEach(k=>{const m=r[k],rec=r.recs[k];if(!m||!rec)return;
+  Object.keys(m).filter(f=>PACK[f]&&!CANFIT.includes(f)).forEach(f=>{
+   let tot=0;const qs=[];sessionParts(i,k,rec).forEach(([pj,j,kk])=>{const q=rawPd(pj,j);if(q&&q[kk]&&q.recs[kk]===rec&&q[kk][f]){tot+=q[kk][f];qs.push(q[kk][f])}});
+   if(!(tot>0))return;const n=Math.max(1,Math.round(tot/PACK[f].g)),fa=n*PACK[f].g/tot;if(fa<0.85||fa>1.2||Math.abs(fa-1)<0.01)return;
+   /* chaque portion doit rester dans sa fourchette habituelle */
+   const bd=BOUNDS.main[f]||[0,F[f].max||300],lo=bd[0]*0.8,hi=Math.min(bd[1],(HARDMAX.main||{})[f]||Infinity);if(qs.some(q=>q*fa<lo||q*fa>hi))return;
+   if(res===r)res=Object.assign({},r);if(res[k]===m)res[k]=Object.assign({},m);res[k][f]=roundItem(f,m[f]*fa)})});
+ return res}
 
 /* ---------- Génération du mois ---------- */
 function rng(seed){let a=seed>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
@@ -783,7 +822,7 @@ function catchUpStock(){
  if(!S.stockAt){S.stockAt=t;return true}
  if(S.stockAt>=t)return false;
  const u=useBetween(S.stockAt,t),st=stockOf();
- for(const k in u){if(st[k]===undefined)continue;const q=st[k]-u[k];if(q>0.5)st[k]=q;else delete st[k]}
+ for(const k in u){if(st[k]===undefined)continue;const q=st[k]-u[k];if(q>0.5&&!(PACK[k]&&q<PACK[k].g*0.06))st[k]=q;else delete st[k]}
  S.stockAt=t;return true;
 }
 function projectedStock(w){
@@ -832,6 +871,8 @@ function toBuy(w){
 }
 function unitLbl(k){const f=F[k];return f.pc?f.unit[1]:ML(k)?"ml":"g"}
 function toInput(k,g){const f=F[k];return f.pc?Math.ceil(g/f.pc-0.001):Math.ceil(g/50)*50}
+/* fiche J'ai fait les courses : les conserves et les briques se comptent à l'unité */
+const bIn=(k,g)=>PACK[k]?(g>0.5?packN(k,g):0):toInput(k,g),bOut=(k,v)=>{if(!PACK[k])return fromInput(k,v);v=parseFloat(String(v).replace(",","."));return isNaN(v)||v<0?0:v*PACK[k].g},bUnit=k=>PACK[k]?PACK[k].u[1]:unitLbl(k);
 function fromInput(k,v){const f=F[k];v=parseFloat(String(v).replace(",","."));if(isNaN(v)||v<0)v=0;return f.pc?v*f.pc:v}
 function stockQty(k,g){const f=F[k];if(f.pc){const st=f.step||1,u=Math.max(st,Math.round(g/f.pc/st)*st);return String(u).replace(".",",")+" "+(u>1?f.unit[1]:f.unit[0])}if(k==="lait")return (g/1000).toFixed(1).replace(".",",")+" L";if(k==="coco")return Math.round(g)+" ml";return g>=1000?(g/1000).toFixed(2).replace(".",",")+" kg":Math.round(g)+" g"}
 
@@ -860,7 +901,7 @@ const yieldRange=x=>COOK[x]<1?[.45,1]:[1.4,4];
 const cuit=(x,g)=>Math.max(5,Math.round(g*yieldOf(x)/5)*5);
 const ML=k=>k==="lait"||k==="coco";
 function qty(k,g){const f=F[k];if(f.pc){const u=g/f.pc;const n=Number.isInteger(u)?u:u.toFixed(1).replace(".",",");return n+" "+(u>1?f.unit[1]:f.unit[0])}if(ML(k))return g>=1000?(g/1000).toFixed(2).replace(".",",")+" L":Math.round(g)+" ml";return g>=1000?(g/1000).toFixed(2).replace(".",",")+" kg":Math.round(g)+" g"}
-function shopQty(k,g){const f=F[k];if(f.pc){const u=Math.ceil(g/f.pc);return u+" "+(u>1?f.unit[1]:f.unit[0])}if(k==="lait")return (Math.ceil(g/100)/10).toFixed(1).replace(".",",")+" L";const r=Math.ceil(g/50)*50;if(k==="coco")return r+" ml";return r>=1000?(r/1000).toFixed(r%1000?2:0).replace(".",",")+" kg":r+" g"}
+function shopQty(k,g){const f=F[k];if(PACK[k]){const n=packN(k,g);return packLbl(k,n)+" de "+PACK[k].g+(ML(k)?" ml":" g")}if(f.pc){const u=Math.ceil(g/f.pc);return u+" "+(u>1?f.unit[1]:f.unit[0])}if(k==="lait")return (Math.ceil(g/100)/10).toFixed(1).replace(".",",")+" L";const r=Math.ceil(g/50)*50;if(k==="coco")return r+" ml";return r>=1000?(r/1000).toFixed(r%1000?2:0).replace(".",",")+" kg":r+" g"}
 function sumItems(list){const o={};list.forEach(m=>{if(m)for(const k in m)o[k]=(o[k]||0)+m[k]});return o}
 const mins=r=>{const t=r.t||[0,0];return t[0]+t[1]};
 const quick=r=>mins(r)>0&&mins(r)<=20;
@@ -967,7 +1008,7 @@ function sheetMeal(o){
  const nx=PLAN[i+1],boxes=k==="dinner"&&nx&&nx.left&&nx.lunch===rec&&!offOf(nx.date).includes("lunch");
  const rank=x=>x===rec.prot?0:x===rec.carb?1:x===rec.fat?3:2;
  const side=x=>x==="painc"&&rec.carb!=="painc"&&(k==="lunch"||k==="dinner");
- const ingList=items=>`<div class="list ing">${Object.keys(items).sort((a,b)=>rank(a)-rank(b)).map(x=>`<div class="li"><div class="t"><b>${esc(F[x].n)}</b>${side(x)?"<small>en accompagnement</small>":""}</div><div class="v">${qty(x,items[x])}${COOK[x]?`<small>≈ ${cuit(x,items[x])} g ${COOKW[x]||"cuit"}</small>`:""}</div></div>`).join("")}</div>`;
+ const ingList=(items,tot)=>`<div class="list ing">${Object.keys(items).sort((a,b)=>rank(a)-rank(b)).map(x=>`<div class="li"><div class="t"><b>${esc(F[x].n)}</b>${side(x)?"<small>en accompagnement</small>":""}</div><div class="v">${qty(x,items[x])}${tot&&PACK[x]&&Math.round(items[x]/PACK[x].g)>=1&&Math.abs(items[x]/PACK[x].g-Math.round(items[x]/PACK[x].g))<0.06?`<small>${packLbl(x,Math.round(items[x]/PACK[x].g))} entière${Math.round(items[x]/PACK[x].g)>1?"s":""}</small>`:""}${COOK[x]?`<small>≈ ${cuit(x,items[x])} g ${COOKW[x]||"cuit"}</small>`:""}</div></div>`).join("")}</div>`;
  /* partage après cuisson quand on cuisine pour plusieurs : chaque assiette et chaque boîte, en poids cuit */
  const share=(parts)=>{const xs=[...new Set(parts.flatMap(([,m])=>Object.keys(m||{})))].filter(x=>COOK[x]).sort((a,b)=>rank(a)-rank(b));if(!xs.length)return "";
   return `<div><div class="sec"><h2>Une fois cuit</h2><span class="aside">pèse et partage</span></div><div class="list ing">${xs.map(x=>{const ps=parts.filter(([,m])=>m&&m[x]);const tot=ps.reduce((a,[,m])=>a+m[x],0);return `<div class="li" data-cookrow="${x}"><div class="t"><b>${COOKN[x]}</b><small>${ps.map(([l,m])=>`${l} <span data-r="${m[x]}">${cuit(x,m[x])} g</span>`).join(" · ")}</small></div><div class="v cookin"><input type="number" inputmode="numeric" min="0" step="5" data-cook="${x}" data-raw="${tot}" placeholder="${cuit(x,tot)}" aria-label="${COOKN[x]}, poids pesé en grammes"> g</div></div>`}).join("")}</div><p class="muted tiny" style="margin:8px 0 0">Les quantités sont données crues. Pèse tout ce qui sort de la poêle ou de la casserole et note le poids à droite : les parts se recalculent. L'appli retient ta cuisson pour la fois suivante.</p></div>`};
@@ -975,9 +1016,9 @@ function sheetMeal(o){
  if(who.length>1){const opts=who.map(pi=>[pi,first(S.people[pi])]);opts.push(["all","Les deux"]);body+=seg(opts,sel,"msel")}
  if(sel==="all"){
   const items=sumItems(who.map(pi=>pd(pi,i)[k]));
-  body+=`<div><div class="sec" style="margin-top:4px"><h2>Pour vous deux</h2></div>${ingList(items)}</div>`;
+  body+=`<div><div class="sec" style="margin-top:4px"><h2>Pour vous deux</h2></div>${ingList(items,!boxes)}${boxes?"":packRest(items)}</div>`;
   const parts=who.map(pi=>[first(S.people[pi]),pd(pi,i)[k]]);
-  if(boxes){const nd=who.map(pi=>pd(pi,i+1).lunch).filter(Boolean);if(nd.length){body+=`<div><div class="sec"><h2>À cuisiner ce soir</h2><span class="aside">${nd.length} ${nd.length>1?"boîtes":"boîte"} comprises</span></div>${ingList(sumItems(who.map(pi=>pd(pi,i)[k]).concat(nd)))}</div>`;
+  if(boxes){const nd=who.map(pi=>pd(pi,i+1).lunch).filter(Boolean);if(nd.length){body+=`<div><div class="sec"><h2>À cuisiner ce soir</h2><span class="aside">${nd.length} ${nd.length>1?"boîtes":"boîte"} comprises</span></div>${(()=>{const all=sumItems(who.map(pi=>pd(pi,i)[k]).concat(nd));return ingList(all,true)+packRest(all)})()}</div>`;
    who.forEach(pi=>{const b=pd(pi,i+1).lunch,n=first(S.people[pi]);if(b)parts.push([(/^[aeiouyàâéèêëîïôûü]/i.test(n)?"boîte d'":"boîte de ")+n,b])})}}
   body+=share(parts);
  }else{
@@ -1031,7 +1072,7 @@ function viewCourses(){
  if(!n)html+=`<div class="empty"><b>Rien à acheter</b>Tout est déjà dans le stock cette semaine.</div>`;
  AISLES.forEach(a=>{const ks=(groups[a]||[]).filter(k=>buy[k]).sort((x,y)=>F[x].n.localeCompare(F[y].n));if(!ks.length)return;
   html+=`<div class="sec"><h2>${a}</h2><span class="aside">${ks.length}</span></div><div class="list">${ks.map(k=>`<button class="li${ck[k]?" done":""}" data-a="ck" data-v="${k}" role="checkbox" aria-checked="${!!ck[k]}"><span class="ck">${ic("check")}</span><div class="t"><b>${esc(F[k].n)}</b><small>${have[k]>0.5?`${stockQty(k,have[k])} déjà en stock · `:""}≈ ${euro(price(k,buy[k]))}</small></div><div class="v">${shopQty(k,buy[k])}</div></button>`).join("")}</div>`});
- if(inStock.length)html+=`<div class="sec"><h2>Déjà dans le stock</h2><span class="aside">${inStock.length}</span></div><div class="list">${inStock.map(k=>`<div class="li"><div class="t"><b class="muted">${esc(F[k].n)}</b></div><div class="v">${shopQty(k,tot[k])}</div></div>`).join("")}</div>`;
+ if(inStock.length)html+=`<div class="sec"><h2>Déjà dans le stock</h2><span class="aside">${inStock.length}</span></div><div class="list">${inStock.map(k=>`<div class="li"><div class="t"><b class="muted">${esc(F[k].n)}</b></div><div class="v">${PACK[k]?qty(k,tot[k]):shopQty(k,tot[k])}</div></div>`).join("")}</div>`;
  html+=`<p class="muted tiny" style="margin-top:16px">Pour vous deux, stock déduit. Épices, sel, ail, citron, moutarde, vinaigre et bouillon non comptés. Prix moyens en marque distributeur.</p>`;
  return html;
 }
@@ -1043,7 +1084,7 @@ function dockCourses(){
 function sheetBuy(){
  const w=S.week,{tot,buy,have}=toBuy(w);
  const keys=Object.keys(tot).sort((a,b)=>F[a].n.localeCompare(F[b].n));
- return {kicker:`Semaine ${w+1}`,title:"Ce que tu as acheté",body:`<p class="muted small" style="margin:0">Corrige avec les quantités vraiment prises, paquets entiers compris. Le surplus part dans le stock.</p><div class="list">${keys.map(k=>`<div class="li"><div class="t"><b>${esc(F[k].n)}</b><small>besoin ${shopQty(k,tot[k])}${have[k]>0.5?` · en stock ${stockQty(k,have[k])}`:""}</small></div><label class="qty"><input data-bq="${k}" type="number" inputmode="decimal" min="0" step="any" value="${toInput(k,buy[k]||0)}" aria-label="${esc(F[k].n)}"><span>${unitLbl(k)}</span></label></div>`).join("")}</div><button class="btn pri full" data-a="validate">Valider et mettre à jour le stock</button>`};
+ return {kicker:`Semaine ${w+1}`,title:"Ce que tu as acheté",body:`<p class="muted small" style="margin:0">Corrige avec les quantités vraiment prises, paquets entiers compris. Le surplus part dans le stock.</p><div class="list">${keys.map(k=>`<div class="li"><div class="t"><b>${esc(F[k].n)}</b><small>besoin ${PACK[k]?qty(k,tot[k]):shopQty(k,tot[k])}${have[k]>0.5?` · en stock ${stockQty(k,have[k])}`:""}</small></div><label class="qty"><input data-bq="${k}" type="number" inputmode="decimal" min="0" step="any" value="${bIn(k,buy[k]||0)}" aria-label="${esc(F[k].n)}"><span>${bUnit(k)}</span></label></div>`).join("")}</div><button class="btn pri full" data-a="validate">Valider et mettre à jour le stock</button>`};
 }
 
 /* ---------- Écran Stock ---------- */
@@ -1247,7 +1288,7 @@ document.addEventListener("click",e=>{
   case "copy":{const {buy,groups}=toBuy(S.week);const txt="Courses semaine "+(S.week+1)+"\n\n"+AISLES.map(o=>{const ks=(groups[o]||[]).filter(k=>buy[k]);return ks.length?o+"\n"+ks.map(k=>"  "+F[k].n+" : "+shopQty(k,buy[k])).join("\n"):""}).filter(Boolean).join("\n\n");copyText(txt,b,"Copiée");break}
   case "validate":{
    const w=S.week,st=stockOf(),bought={};
-   document.querySelectorAll("[data-bq]").forEach(x=>{bought[x.dataset.bq]=fromInput(x.dataset.bq,x.value)});
+   document.querySelectorAll("[data-bq]").forEach(x=>{bought[x.dataset.bq]=bOut(x.dataset.bq,x.value)});
    S.ledger[wkKey(w)]={before:Object.assign({},st),bought};
    Object.keys(bought).forEach(k=>{const q=(st[k]||0)+(bought[k]||0);if(q>0.5)st[k]=q});
    S.done[wkKey(w)]=true;S.checked[wkKey(w)]={};lastPushed="";S.sheet=null;refresh();window.scrollTo(0,0);break}
@@ -1293,7 +1334,7 @@ document.addEventListener("input",e=>{
 });
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&S.sheet)closeSheet();if(e.key==="Enter"&&e.target.id==="wkg"){const b=document.querySelector('[data-a="addw"]');if(b)b.click()}});
 
-const APPV="2026-11-22f";
+const APPV="2026-11-23a";
 /* ---------- Démarrage ---------- */
 if(S.tab==="menus")S.tab="jour";else if(S.tab==="profils")S.tab="moi";
 function renamePrincess(){let ch=false;const p=S.people[1];if(p&&(p.name==="Ma conjointe"||p.name==="Personne 2")){p.name="Princesse";ch=true}
@@ -1331,6 +1372,8 @@ function renamePrincess(){let ch=false;const p=S.people[1];if(p&&(p.name==="Ma c
  if((S.v||0)<13){if(S.people.some(q=>/anthony/i.test(q.name||""))&&S.start==="2026-11-16"){S.off=S.off||{};const l=new Set(S.off["2026-11-22"]||[]);l.add("bkf");l.add("lunch");S.off["2026-11-22"]=[...l]}S.v=13;ch=true}
  /* version 14 : dîner du 22 novembre libre aussi (restes des lasagnes) */
  if((S.v||0)<14){if(S.people.some(q=>/anthony/i.test(q.name||""))&&S.start==="2026-11-16"){S.off=S.off||{};const l=new Set(S.off["2026-11-22"]||[]);l.add("dinner");S.off["2026-11-22"]=[...l]}S.v=14;ch=true}
+ /* version 15 : les fonds de boîte entamés au frigo (haricots rouges du chili, haricots verts de la niçoise) sont à finir cette semaine, on ne compte plus dessus pour plus tard */
+ if((S.v||0)<15){if(S.people.some(q=>/anthony/i.test(q.name||""))&&S.start==="2026-11-16"&&S.stock){const st=S.stock;if(st.hrouges!==undefined){const q=st.hrouges-147;if(q>0.5)st.hrouges=q;else delete st.hrouges}if(st.hverts!==undefined){const q=st.hverts-212;if(q>0.5)st.hverts=q;else delete st.hverts}}S.v=15;ch=true}
  S.people.forEach(q=>{if(q.bkfFixed===undefined)q.bkfFixed=""});
  return ch}
 renamePrincess();

@@ -34,6 +34,8 @@ L'onglet Courses donne la liste de la semaine pour les deux, rangée par rayon, 
 
 Le stock baisse tout seul : chaque matin, ce que les menus prévoyaient la veille en est retiré. Quand il ne manque qu'une fin de paquet, moins de 20 % du besoin et jamais plus de 200 g, l'appli considère qu'on fait avec et ne l'ajoute pas aux courses.
 
+Les conserves et les briques s'achètent entières : haricots rouges, pois chiches, champignons, thon, coulis et lait de coco. Pour ne pas laisser de fond de boîte au frigo, la quantité cuisinée d'un repas, boîtes du lendemain comprises, est arrondie à la boîte entière. Pour le thon, le coulis et le lait de coco, l'arrondi ne se fait que s'il change peu les portions. Quand il reste quand même un fond, la fiche du plat dit combien et comment le garder.
+
 Les produits qui ne servent dans aucune recette, sauces, épices, surgelés tout prêts, sont notés à part dans Le reste à la maison. Ils ne baissent pas tout seuls, on corrige à la main.
 
 Pour ne pas laisser dormir ce qu'on a au congélateur, quelques plats existent uniquement pour l'écouler : épaule de porc, merguez, cuisses de poulet, lardons, butternut, lait de coco et nouilles de riz. Tant qu'il en reste, l'appli les place sur des dîners des semaines pas encore achetées, un tous les trois jours au plus. Le bouton Caser mon stock dans les menus refait ce placement à la demande.
